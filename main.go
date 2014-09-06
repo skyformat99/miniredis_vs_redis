@@ -1,3 +1,8 @@
+// Package to compare the Redis implementation of github.com/alicebob/miniredis
+// against a real Redis server.
+//
+// There is no executable code beside the tests.
+//
 package main
 
 import (
