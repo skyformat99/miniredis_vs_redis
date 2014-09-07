@@ -63,6 +63,80 @@ func TestGetrange(t *testing.T) {
 	)
 }
 
+func TestBitcount(t *testing.T) {
+	testCommands(t,
+		succ("SET", "foo", "The quick brown fox jumps over the lazy dog"),
+		succ("SET", "utf8", "❆❅❄☃"),
+		succ("BITCOUNT", "foo"),
+		succ("BITCOUNT", "utf8"),
+		succ("BITCOUNT", "foo", 0, 0),
+		succ("BITCOUNT", "utf8", 0, 0),
+		fail("BITCOUNT", "foo", 4, 2, 2, 2, 2),
+		succ("HSET", "aap", "noot", "mies"),
+		fail("BITCOUNT", "aap", 4, 2),
+	)
+}
+
+func TestBitop(t *testing.T) {
+	testCommands(t,
+		succ("SET", "a", "foo"),
+		succ("SET", "b", "aap"),
+		succ("SET", "c", "noot"),
+		succ("SET", "d", "mies"),
+		succ("SET", "e", "❆❅❄☃"),
+
+		// ANDs
+		succ("BITOP", "AND", "target", "a", "b", "c", "d"),
+		succ("GET", "target"),
+		succ("BITOP", "AND", "target", "a", "nosuch", "c", "d"),
+		succ("GET", "target"),
+		succ("BITOP", "AND", "utf8", "e", "e"),
+		succ("GET", "utf8"),
+		succ("BITOP", "AND", "utf8", "b", "e"),
+		succ("GET", "utf8"),
+
+		// ORs
+		succ("BITOP", "OR", "target", "a", "b", "c", "d"),
+		succ("GET", "target"),
+		succ("BITOP", "OR", "target", "a", "nosuch", "c", "d"),
+		succ("GET", "target"),
+		succ("BITOP", "OR", "utf8", "e", "e"),
+		succ("GET", "utf8"),
+		succ("BITOP", "OR", "utf8", "b", "e"),
+		succ("GET", "utf8"),
+
+		// XORs
+		succ("BITOP", "XOR", "target", "a", "b", "c", "d"),
+		succ("GET", "target"),
+		succ("BITOP", "XOR", "target", "a", "nosuch", "c", "d"),
+		succ("GET", "target"),
+		succ("BITOP", "XOR", "target", "a"),
+		succ("GET", "target"),
+		succ("BITOP", "XOR", "utf8", "e", "e"),
+		succ("GET", "utf8"),
+		succ("BITOP", "XOR", "utf8", "b", "e"),
+		succ("GET", "utf8"),
+
+		// NOTs
+		succ("BITOP", "NOT", "target", "a"),
+		succ("GET", "target"),
+		succ("BITOP", "NOT", "target", "e"),
+		succ("GET", "target"),
+
+		fail("BITOP", "AND", "utf8"),
+		fail("BITOP", "AND"),
+		fail("BITOP", "NOT", "foo", "bar", "baz"),
+		fail("BITOP", "WRONGOP", "key"),
+		fail("BITOP", "WRONGOP"),
+
+		succ("HSET", "hash", "aap", "noot"),
+		fail("BITOP", "AND", "t", "hash", "irrelevant"),
+		fail("BITOP", "OR", "t", "hash", "irrelevant"),
+		fail("BITOP", "XOR", "t", "hash", "irrelevant"),
+		fail("BITOP", "NOT", "t", "hash"),
+	)
+}
+
 func testCommands(t *testing.T, commands ...command) {
 	sMini, err := miniredis.Run()
 	ok(t, err)
