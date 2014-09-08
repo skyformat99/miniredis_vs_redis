@@ -63,6 +63,45 @@ func TestGetrange(t *testing.T) {
 	)
 }
 
+func TestIncrAndFriends(t *testing.T) {
+	testCommands(t,
+		succ("INCR", "aap"),
+		succ("INCR", "aap"),
+		succ("INCR", "aap"),
+		succ("DECR", "aap"),
+		succ("DECR", "noot"),
+		succ("DECR", "noot"),
+		succ("INCRBY", "noot", 100),
+		succ("INCRBY", "noot", 200),
+		succ("INCRBY", "noot", 300),
+		succ("DECRBY", "noot", 100),
+		succ("DECRBY", "noot", 200),
+		succ("DECRBY", "noot", 300),
+		succ("DECRBY", "noot", 400),
+		succ("INCRBYFLOAT", "zus", 1.23),
+		succ("INCRBYFLOAT", "zus", 3.1456),
+		succ("INCRBYFLOAT", "zus", 987.65432),
+		succ("INCRBYFLOAT", "whole", 300),
+		succ("INCRBYFLOAT", "whole", 300),
+		succ("INCRBYFLOAT", "whole", 300),
+		succ("INCRBYFLOAT", "big", 12345e10),
+
+		// Error cases
+		succ("HSET", "mies", "noot", "mies"),
+		fail("INCR", "mies"),
+		fail("INCRBY", "mies"),
+		fail("DECR", "mies"),
+		fail("DECRBY", "mies"),
+		fail("INCRBYFLOAT", "mies"),
+
+		fail("INCR", "wim", "err"),
+		fail("INCRBY", "wim"),
+		fail("DECR", "wim", "err"),
+		fail("DECRBY", "wim"),
+		fail("INCRBYFLOAT", "mies"),
+	)
+}
+
 func TestBitcount(t *testing.T) {
 	testCommands(t,
 		succ("SET", "foo", "The quick brown fox jumps over the lazy dog"),
