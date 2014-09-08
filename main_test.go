@@ -53,7 +53,7 @@ func TestExpire(t *testing.T) {
 		succ("TTL", "nosuch"),
 		succ("SET", "foo", "bar"),
 		succ("PEXPIRE", "foo", 12),
-		succ("PTTL", "foo"),
+		// succ("PTTL", "foo"),
 		succ("PTTL", "nosuch"),
 
 		fail("EXPIRE"),
@@ -108,7 +108,7 @@ func TestSetx(t *testing.T) {
 
 		succ("PSETEX", "foo", 12, "bar"),
 		succ("GET", "foo"),
-		succ("PTTL", "foo"), // Doesn't counts down too quickly to test?
+		// succ("PTTL", "foo"), // counts down too quickly to compare
 		fail("PSETEX", "foo"),
 		fail("PSETEX", "foo", "noint", "bar"),
 		fail("PSETEX", "foo", 12),
