@@ -45,6 +45,32 @@ func TestSet(t *testing.T) {
 	)
 }
 
+func TestExpire(t *testing.T) {
+	testCommands(t,
+		succ("SET", "foo", "bar"),
+		succ("EXPIRE", "foo", 12),
+		succ("TTL", "foo"),
+		succ("TTL", "nosuch"),
+		succ("SET", "foo", "bar"),
+		succ("PEXPIRE", "foo", 12),
+		succ("PTTL", "foo"),
+		succ("PTTL", "nosuch"),
+
+		fail("EXPIRE"),
+		fail("EXPIRE", "foo"),
+		fail("EXPIRE", "foo", "noint"),
+		fail("EXPIRE", "foo", 12, "toomany"),
+		fail("TTL"),
+		fail("TTL", "too", "many"),
+		fail("PEXPIRE"),
+		fail("PEXPIRE", "foo"),
+		fail("PEXPIRE", "foo", "noint"),
+		fail("PEXPIRE", "foo", 12, "toomany"),
+		fail("PTTL"),
+		fail("PTTL", "too", "many"),
+	)
+}
+
 func TestMset(t *testing.T) {
 	testCommands(t,
 		succ("MSET", "foo", "bar"),
@@ -67,6 +93,26 @@ func TestMset(t *testing.T) {
 
 		succ("HSET", "aap", "noot", "mies"),
 		succ("MSETNX", "aap", "again", "eight", "nine"),
+	)
+}
+
+func TestSetx(t *testing.T) {
+	testCommands(t,
+		succ("SETEX", "foo", 12, "bar"),
+		succ("GET", "foo"),
+		succ("TTL", "foo"),
+		fail("SETEX", "foo"),
+		fail("SETEX", "foo", "noint", "bar"),
+		fail("SETEX", "foo", 12),
+		fail("SETEX", "foo", 12, "bar", "toomany"),
+
+		succ("PSETEX", "foo", 12, "bar"),
+		succ("GET", "foo"),
+		succ("PTTL", "foo"), // Doesn't counts down too quickly to test?
+		fail("PSETEX", "foo"),
+		fail("PSETEX", "foo", "noint", "bar"),
+		fail("PSETEX", "foo", 12),
+		fail("PSETEX", "foo", 12, "bar", "toomany"),
 	)
 }
 
