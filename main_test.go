@@ -137,6 +137,46 @@ func TestBitop(t *testing.T) {
 	)
 }
 
+func TestBitpos(t *testing.T) {
+	testCommands(t,
+		succ("SET", "a", "\x00\x0f"),
+		succ("SET", "b", "\xf0\xf0"),
+		succ("SET", "c", "\x00\x00\x00\x0f"),
+		succ("SET", "d", "\x00\x00\x00"),
+		succ("SET", "e", "\xff\xff\xff"),
+
+		succ("BITPOS", "a", 1),
+		succ("BITPOS", "a", 0),
+		succ("BITPOS", "a", 1, 1),
+		succ("BITPOS", "a", 0, 1),
+		succ("BITPOS", "a", 1, 1, 2),
+		succ("BITPOS", "a", 0, 1, 2),
+		succ("BITPOS", "b", 1),
+		succ("BITPOS", "b", 0),
+		succ("BITPOS", "c", 1),
+		succ("BITPOS", "c", 0),
+		succ("BITPOS", "d", 1),
+		succ("BITPOS", "d", 0),
+		succ("BITPOS", "e", 1),
+		succ("BITPOS", "e", 0),
+		succ("BITPOS", "e", 1, 1),
+		succ("BITPOS", "e", 0, 1),
+		succ("BITPOS", "e", 1, 1, 2),
+		succ("BITPOS", "e", 0, 1, 2),
+		succ("BITPOS", "e", 1, 100, 2),
+		succ("BITPOS", "e", 0, 100, 2),
+		succ("BITPOS", "e", 1, 1, -2),
+		succ("BITPOS", "e", 1, 1, -2000),
+		succ("BITPOS", "e", 0, 1, 2),
+		succ("BITPOS", "nosuch", 1),
+		succ("BITPOS", "nosuch", 0),
+
+		succ("HSET", "hash", "aap", "noot"),
+		fail("BITPOS", "hash", 1),
+		fail("BITPOS", "a", "aap"),
+	)
+}
+
 func testCommands(t *testing.T, commands ...command) {
 	sMini, err := miniredis.Run()
 	ok(t, err)
