@@ -45,6 +45,31 @@ func TestSet(t *testing.T) {
 	)
 }
 
+func TestMset(t *testing.T) {
+	testCommands(t,
+		succ("MSET", "foo", "bar"),
+		succ("MSET", "foo", "bar", "baz", "?"),
+		succ("MSET", "foo", "bar", "foo", "baz"), // double key
+		succ("GET", "foo"),
+		// Error cases
+		fail("MSET"),
+		fail("MSET", "foo"),
+		fail("MSET", "foo", "bar", "baz"),
+
+		succ("MSETNX", "foo", "bar", "aap", "noot"),
+		succ("MSETNX", "one", "two", "three", "four"),
+		succ("MSETNX", "11", "12", "11", "14"), // double key
+		succ("GET", "11"),
+		// Error cases
+		fail("MSETNX"),
+		fail("MSETNX", "one"),
+		fail("MSETNX", "one", "two", "three"),
+
+		succ("HSET", "aap", "noot", "mies"),
+		succ("MSETNX", "aap", "again", "eight", "nine"),
+	)
+}
+
 func TestGetrange(t *testing.T) {
 	testCommands(t,
 		succ("SET", "foo", "The quick brown fox jumps over the lazy dog"),
