@@ -313,6 +313,40 @@ func TestGetbit(t *testing.T) {
 	testCommands(t, commands...)
 }
 
+func TestSetbit(t *testing.T) {
+	commands := []command{
+		succ("SET", "a", "\x00\x0f"),
+		succ("SETBIT", "a", 0, 1),
+		succ("GET", "a"),
+		succ("SETBIT", "a", 0, 0),
+		succ("GET", "a"),
+		succ("SETBIT", "a", 13, 0),
+		succ("GET", "a"),
+		succ("SETBIT", "nosuch", 11111, 1),
+		succ("GET", "nosuch"),
+
+		// Error cases
+		succ("HSET", "hash", "aap", "noot"),
+		fail("SETBIT", "hash", 1, 1),
+		fail("SETBIT", "a", "aap", 0),
+		fail("SETBIT", "a", 0, "aap"),
+		fail("SETBIT", "a", -1, 0),
+		fail("SETBIT", "a", 1, -1),
+		fail("SETBIT", "a", 1, 2),
+		fail("SETBIT", "too", 1, 2, "many"),
+	}
+
+	// Generate read commands.
+	for i := range make([]struct{}, 100) {
+		commands = append(commands,
+			succ("GETBIT", "a", i),
+			succ("GETBIT", "e", i),
+		)
+	}
+
+	testCommands(t, commands...)
+}
+
 func testCommands(t *testing.T, commands ...command) {
 	sMini, err := miniredis.Run()
 	ok(t, err)
