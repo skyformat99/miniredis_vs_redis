@@ -134,6 +134,28 @@ func TestGetrange(t *testing.T) {
 	)
 }
 
+func TestSetrange(t *testing.T) {
+	testCommands(t,
+		succ("SET", "foo", "The quick brown fox jumps over the lazy dog"),
+		succ("SETRANGE", "foo", 0, "aap"),
+		succ("GET", "foo"),
+		succ("SETRANGE", "foo", 10, "noot"),
+		succ("GET", "foo"),
+		succ("SETRANGE", "foo", 40, "overtheedge"),
+		succ("GET", "foo"),
+		succ("SETRANGE", "foo", 400, "oh, hey there"),
+		succ("GET", "foo"),
+
+		fail("SETRANGE", "foo"),
+		fail("SETRANGE", "foo", 1),
+		fail("SETRANGE", "foo", "aap", "bar"),
+		fail("SETRANGE", "foo", "noint", "bar"),
+		fail("SETRANGE", "foo", -1, "bar"),
+		succ("HSET", "aap", "noot", "mies"),
+		fail("SETRANGE", "aap", 4, "bar"),
+	)
+}
+
 func TestIncrAndFriends(t *testing.T) {
 	testCommands(t,
 		succ("INCR", "aap"),
