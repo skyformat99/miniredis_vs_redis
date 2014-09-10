@@ -34,4 +34,31 @@ func TestTx(t *testing.T) {
 		succ("SET", "foo", "bar"),
 		fail("EXEC"),
 	)
+
+	// Simple WATCH
+	testCommands(t,
+		succ("SET", "foo", "bar"),
+		succ("WATCH", "foo"),
+		succ("MULTI"),
+		succ("GET", "foo"),
+		succ("EXEC"),
+	)
+
+	// Simple UNWATCH
+	testCommands(t,
+		succ("SET", "foo", "bar"),
+		succ("WATCH", "foo"),
+		succ("UNWATCH"),
+		succ("MULTI"),
+		succ("GET", "foo"),
+		succ("EXEC"),
+	)
+
+	// UNWATCH in a MULTI. Yep. Weird.
+	testCommands(t,
+		succ("WATCH", "foo"),
+		succ("MULTI"),
+		succ("UNWATCH"), // Valid. Somehow.
+		succ("EXEC"),
+	)
 }
