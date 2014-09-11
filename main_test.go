@@ -1,7 +1,10 @@
 package main
 
 import (
+	"fmt"
+	"path/filepath"
 	"reflect"
+	"runtime"
 	"testing"
 
 	"github.com/alicebob/miniredis"
@@ -34,14 +37,22 @@ func fail(cmd string, args ...interface{}) command {
 func TestSet(t *testing.T) {
 	testCommands(t,
 		succ("SET", "foo", "bar"),
-		fail("SET", "foo"),
-		fail("SET", "foo", "bar", "baz"),
 		succ("GET", "foo"),
 		succ("SET", "foo", "bar\bbaz"),
 		succ("GET", "foo"),
 		succ("SET", "foo", "bar", "EX", 100),
 		fail("SET", "foo", "bar", "EX", "noint"),
 		succ("SET", "utf8", "❆❅❄☃"),
+
+		succ("GETSET", "foo", "new"),
+		succ("GET", "foo"),
+		// GETSET on a new key
+		succ("GETSET", "nosuch", "new"),
+		succ("GET", "nosuch"),
+		// Failure cases
+		fail("SET"),
+		fail("SET", "foo"),
+		fail("SET", "foo", "bar", "baz"),
 	)
 }
 
@@ -145,7 +156,11 @@ func TestSetrange(t *testing.T) {
 		succ("GET", "foo"),
 		succ("SETRANGE", "foo", 400, "oh, hey there"),
 		succ("GET", "foo"),
+		// Non existing key
+		succ("SETRANGE", "nosuch", 2, "aap"),
+		succ("GET", "nosuch"),
 
+		// Error cases
 		fail("SETRANGE", "foo"),
 		fail("SETRANGE", "foo", 1),
 		fail("SETRANGE", "foo", "aap", "bar"),
@@ -161,23 +176,39 @@ func TestIncrAndFriends(t *testing.T) {
 		succ("INCR", "aap"),
 		succ("INCR", "aap"),
 		succ("INCR", "aap"),
+		succ("GET", "aap"),
 		succ("DECR", "aap"),
 		succ("DECR", "noot"),
 		succ("DECR", "noot"),
+		succ("GET", "noot"),
 		succ("INCRBY", "noot", 100),
 		succ("INCRBY", "noot", 200),
 		succ("INCRBY", "noot", 300),
+		succ("GET", "noot"),
 		succ("DECRBY", "noot", 100),
 		succ("DECRBY", "noot", 200),
 		succ("DECRBY", "noot", 300),
 		succ("DECRBY", "noot", 400),
+		succ("GET", "noot"),
 		succ("INCRBYFLOAT", "zus", 1.23),
 		succ("INCRBYFLOAT", "zus", 3.1456),
 		succ("INCRBYFLOAT", "zus", 987.65432),
+		succ("GET", "zus"),
 		succ("INCRBYFLOAT", "whole", 300),
 		succ("INCRBYFLOAT", "whole", 300),
 		succ("INCRBYFLOAT", "whole", 300),
+		succ("GET", "whole"),
 		succ("INCRBYFLOAT", "big", 12345e10),
+		succ("GET", "big"),
+
+		// Floats are not ints.
+		succ("SET", "float", 1.23),
+		fail("INCR", "float"),
+		fail("INCRBY", "float", 12),
+		fail("DECR", "float"),
+		fail("DECRBY", "float", 12),
+		succ("SET", "str", "I'm a string"),
+		fail("INCRBYFLOAT", "str", 123.5),
 
 		// Error cases
 		succ("HSET", "mies", "noot", "mies"),
@@ -226,6 +257,9 @@ func TestBitop(t *testing.T) {
 		succ("GET", "utf8"),
 		succ("BITOP", "AND", "utf8", "b", "e"),
 		succ("GET", "utf8"),
+		// BITOP on only unknown keys:
+		succ("BITOP", "AND", "bits", "nosuch", "nosucheither"),
+		succ("GET", "bits"),
 
 		// ORs
 		succ("BITOP", "OR", "target", "a", "b", "c", "d"),
@@ -236,6 +270,13 @@ func TestBitop(t *testing.T) {
 		succ("GET", "utf8"),
 		succ("BITOP", "OR", "utf8", "b", "e"),
 		succ("GET", "utf8"),
+		// BITOP on only unknown keys:
+		succ("BITOP", "OR", "bits", "nosuch", "nosucheither"),
+		succ("GET", "bits"),
+		succ("SET", "empty", ""),
+		// BITOP on empty key
+		succ("BITOP", "OR", "bits", "empty"),
+		succ("GET", "bits"),
 
 		// XORs
 		succ("BITOP", "XOR", "target", "a", "b", "c", "d"),
@@ -254,6 +295,8 @@ func TestBitop(t *testing.T) {
 		succ("GET", "target"),
 		succ("BITOP", "NOT", "target", "e"),
 		succ("GET", "target"),
+		succ("BITOP", "NOT", "bits", "nosuch"),
+		succ("GET", "bits"),
 
 		fail("BITOP", "AND", "utf8"),
 		fail("BITOP", "AND"),
@@ -369,6 +412,20 @@ func TestSetbit(t *testing.T) {
 	testCommands(t, commands...)
 }
 
+func TestAppend(t *testing.T) {
+	testCommands(t,
+		succ("SET", "foo", "bar"),
+		succ("APPEND", "foo", "more"),
+		succ("GET", "foo"),
+		succ("APPEND", "nosuch", "more"),
+		succ("GET", "nosuch"),
+
+		// Failure cases
+		fail("APPEND"),
+		fail("APPEND", "foo"),
+	)
+}
+
 func testCommands(t *testing.T, commands ...command) {
 	sMini, err := miniredis.Run()
 	ok(t, err)
@@ -402,10 +459,16 @@ func testCommands(t *testing.T, commands ...command) {
 			}
 		}
 		if !reflect.DeepEqual(errReal, errMini) {
-			t.Errorf("error error. expected: %#v got: %#v case: %#v\n", vReal, vMini, p)
+			_, file, line, _ := runtime.Caller(1)
+			fmt.Printf("%s:%d: error error. expected: %#v got: %#v case: %#v\n",
+				filepath.Base(file), line, vReal, vMini, p)
+			t.FailNow()
 		}
 		if !reflect.DeepEqual(vReal, vMini) {
-			t.Errorf("value error. expected: %#v got: %#v case: %#v\n", vReal, vMini, p)
+			_, file, line, _ := runtime.Caller(1)
+			fmt.Printf("%s:%d: value error. expected: %#v got: %#v case: %#v\n",
+				filepath.Base(file), line, vReal, vMini, p)
+			t.FailNow()
 		}
 	}
 }
