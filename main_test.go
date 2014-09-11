@@ -53,6 +53,9 @@ func TestSet(t *testing.T) {
 		fail("SET"),
 		fail("SET", "foo"),
 		fail("SET", "foo", "bar", "baz"),
+		succ("HSET", "hash", "key", "value"),
+		fail("GET", "hash"),
+		fail("GETSET", "hash", "new"),
 	)
 }
 
@@ -145,6 +148,18 @@ func TestGetrange(t *testing.T) {
 	)
 }
 
+func TestStrlen(t *testing.T) {
+	testCommands(t,
+		succ("SET", "str", "The quick brown fox jumps over the lazy dog"),
+		succ("STRLEN", "str"),
+		// failure cases
+		fail("STRLEN"),
+		fail("STRLEN", "str", "bar"),
+		succ("HSET", "hash", "key", "value"),
+		fail("STRLEN", "hash"),
+	)
+}
+
 func TestSetrange(t *testing.T) {
 	testCommands(t,
 		succ("SET", "foo", "The quick brown fox jumps over the lazy dog"),
@@ -213,16 +228,18 @@ func TestIncrAndFriends(t *testing.T) {
 		// Error cases
 		succ("HSET", "mies", "noot", "mies"),
 		fail("INCR", "mies"),
-		fail("INCRBY", "mies"),
+		fail("INCRBY", "mies", 1),
+		fail("INCRBY", "mies", "foo"),
 		fail("DECR", "mies"),
-		fail("DECRBY", "mies"),
-		fail("INCRBYFLOAT", "mies"),
+		fail("DECRBY", "mies", 1),
+		fail("INCRBYFLOAT", "mies", 1),
+		fail("INCRBYFLOAT", "int", "foo"),
 
-		fail("INCR", "wim", "err"),
-		fail("INCRBY", "wim"),
-		fail("DECR", "wim", "err"),
-		fail("DECRBY", "wim"),
-		fail("INCRBYFLOAT", "mies"),
+		fail("INCR", "int", "err"),
+		fail("INCRBY", "int"),
+		fail("DECR", "int", "err"),
+		fail("DECRBY", "int"),
+		fail("INCRBYFLOAT", "int"),
 	)
 }
 
