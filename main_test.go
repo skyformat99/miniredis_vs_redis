@@ -447,6 +447,40 @@ func TestAppend(t *testing.T) {
 	)
 }
 
+func TestMove(t *testing.T) {
+	testCommands(t,
+		succ("SET", "foo", "bar"),
+		succ("EXPIRE", "foo", 12345),
+		succ("MOVE", "foo", 2),
+		succ("GET", "foo"),
+		succ("TTL", "foo"),
+		succ("SELECT", 2),
+		succ("GET", "foo"),
+		succ("TTL", "foo"),
+
+		// Failure cases
+		fail("MOVE"),
+		fail("MOVE", "foo"),
+		// fail("MOVE", "foo", "noint"),
+	)
+	// hash key
+	testCommands(t,
+		succ("HSET", "hash", "key", "value"),
+		succ("EXPIRE", "hash", 12345),
+		succ("MOVE", "hash", 2),
+		succ("MGET", "hash", "key"),
+		succ("TTL", "hash"),
+		succ("SELECT", 2),
+		succ("MGET", "hash", "key"),
+		succ("TTL", "hash"),
+	)
+	testCommands(t,
+		succ("SET", "foo", "bar"),
+		// to current DB.
+		fail("MOVE", "foo", 0),
+	)
+}
+
 func testCommands(t *testing.T, commands ...command) {
 	sMini, err := miniredis.Run()
 	ok(t, err)
@@ -466,32 +500,35 @@ func testCommands(t *testing.T, commands ...command) {
 		vMini, errMini := cMini.Do(p.cmd, p.args...)
 		if p.error {
 			if errReal == nil {
-				t.Errorf("got no error from realredis. case: %#v\n", p)
+				lError(t, "got no error from realredis. case: %#v\n", p)
 			}
 			if errMini == nil {
-				t.Errorf("got no error from miniredis. case: %#v\n", p)
+				lError(t, "got no error from miniredis. case: %#v\n", p)
 			}
 		} else {
 			if errReal != nil {
-				t.Errorf("got an error from realredis: %v. case: %#v\n", errReal, p)
+				lError(t, "got an error from realredis: %v. case: %#v\n", errReal, p)
 			}
 			if errMini != nil {
-				t.Errorf("got an error from miniredis: %v. case: %#v\n", errMini, p)
+				lError(t, "got an error from miniredis: %v. case: %#v\n", errMini, p)
 			}
 		}
 		if !reflect.DeepEqual(errReal, errMini) {
-			_, file, line, _ := runtime.Caller(1)
-			fmt.Printf("%s:%d: error error. expected: %#v got: %#v case: %#v\n",
-				filepath.Base(file), line, vReal, vMini, p)
-			t.FailNow()
+			lError(t, "error error. expected: %#v got: %#v case: %#v\n",
+				vReal, vMini, p)
 		}
 		if !reflect.DeepEqual(vReal, vMini) {
-			_, file, line, _ := runtime.Caller(1)
-			fmt.Printf("%s:%d: value error. expected: %#v got: %#v case: %#v\n",
-				filepath.Base(file), line, vReal, vMini, p)
-			t.FailNow()
+			lError(t, "value error. expected: %#v got: %#v case: %#v\n",
+				vReal, vMini, p)
 		}
 	}
+}
+
+func lError(t *testing.T, format string, args ...interface{}) {
+	_, file, line, _ := runtime.Caller(2)
+	prefix := fmt.Sprintf("%s:%d: ", filepath.Base(file), line)
+	fmt.Printf(prefix+format, args...)
+	t.Fail()
 }
 
 /*
