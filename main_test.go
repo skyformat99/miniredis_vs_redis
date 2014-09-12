@@ -425,6 +425,12 @@ func TestAppend(t *testing.T) {
 		fail("APPEND", "foo"),
 	)
 }
+func TestQuit(t *testing.T) {
+	testCommands(t,
+		succ("QUIT"),
+		fail("QUIT"),
+	)
+}
 
 func testCommands(t *testing.T, commands ...command) {
 	sMini, err := miniredis.Run()
