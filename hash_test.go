@@ -35,3 +35,39 @@ func TestHash(t *testing.T) {
 		fail("HVALS", "str"),
 	)
 }
+
+func TestHashIncr(t *testing.T) {
+	testCommands(t,
+		succ("HINCRBY", "aap", "noot", 12),
+		succ("HINCRBY", "aap", "noot", -13),
+		succ("HINCRBY", "aap", "noot", 2123),
+		succ("HGET", "aap", "noot"),
+
+		// Simple failure cases.
+		fail("HINCRBY"),
+		fail("HINCRBY", "aap"),
+		fail("HINCRBY", "aap", "noot"),
+		fail("HINCRBY", "aap", "noot", "noint"),
+		fail("HINCRBY", "aap", "noot", 12, "toomany"),
+		succ("SET", "str", "value"),
+		fail("HINCRBY", "str", "value", 12),
+		succ("HINCRBY", "aap", "noot", 12),
+	)
+
+	testCommands(t,
+		succ("HINCRBYFLOAT", "aap", "noot", 12.3),
+		succ("HINCRBYFLOAT", "aap", "noot", -13.1),
+		succ("HINCRBYFLOAT", "aap", "noot", 200),
+		succ("HGET", "aap", "noot"),
+
+		// Simple failure cases.
+		fail("HINCRBYFLOAT"),
+		fail("HINCRBYFLOAT", "aap"),
+		fail("HINCRBYFLOAT", "aap", "noot"),
+		fail("HINCRBYFLOAT", "aap", "noot", "noint"),
+		fail("HINCRBYFLOAT", "aap", "noot", 12, "toomany"),
+		succ("SET", "str", "value"),
+		fail("HINCRBYFLOAT", "str", "value", 12),
+		succ("HINCRBYFLOAT", "aap", "noot", 12),
+	)
+}
