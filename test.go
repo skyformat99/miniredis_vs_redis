@@ -1,10 +1,12 @@
 package main
 
 import (
+	"bytes"
 	"fmt"
 	"path/filepath"
 	"reflect"
 	"runtime"
+	"sort"
 	"testing"
 
 	"github.com/alicebob/miniredis"
@@ -16,6 +18,7 @@ type command struct {
 	cmd   string // 'GET', 'SET', &c.
 	args  []interface{}
 	error bool // Whether the command should return an error or not.
+	sort  bool // Sort real redis's result. Used for 'keys'.
 }
 
 func succ(cmd string, args ...interface{}) command {
@@ -23,6 +26,15 @@ func succ(cmd string, args ...interface{}) command {
 		cmd:   cmd,
 		args:  args,
 		error: false,
+	}
+}
+
+func succSorted(cmd string, args ...interface{}) command {
+	return command{
+		cmd:   cmd,
+		args:  args,
+		error: false,
+		sort:  true,
 	}
 }
 
@@ -63,21 +75,29 @@ func testCommands(t *testing.T, commands ...command) {
 		if p.error {
 			if errReal == nil {
 				lError(t, "got no error from realredis. case: %#v\n", p)
+				continue
 			}
 			if errMini == nil {
 				lError(t, "got no error from miniredis. case: %#v\n", p)
+				continue
 			}
 		} else {
 			if errReal != nil {
 				lError(t, "got an error from realredis: %v. case: %#v\n", errReal, p)
+				continue
 			}
 			if errMini != nil {
 				lError(t, "got an error from miniredis: %v. case: %#v\n", errMini, p)
+				continue
 			}
 		}
 		if !reflect.DeepEqual(errReal, errMini) {
 			lError(t, "error error. expected: %#v got: %#v case: %#v\n",
 				vReal, vMini, p)
+		}
+		// Sort the strings from real redis. Miniredis is always sorted.
+		if p.sort {
+			sort.Sort(BytesList(vReal.([]interface{})))
 		}
 		if !reflect.DeepEqual(vReal, vMini) {
 			lError(t, "value error. expected: %#v got: %#v case: %#v\n",
@@ -91,6 +111,20 @@ func lError(t *testing.T, format string, args ...interface{}) {
 	prefix := fmt.Sprintf("%s:%d: ", filepath.Base(file), line)
 	fmt.Printf(prefix+format, args...)
 	t.Fail()
+}
+
+// BytesList implements the sort interface for things we know is a list of
+// bytes.
+type BytesList []interface{}
+
+func (b BytesList) Len() int {
+	return len(b)
+}
+func (b BytesList) Less(i, j int) bool {
+	return bytes.Compare(b[i].([]byte), b[j].([]byte)) < 0
+}
+func (b BytesList) Swap(i, j int) {
+	b[i], b[j] = b[j], b[i]
 }
 
 /*
