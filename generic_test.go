@@ -32,3 +32,15 @@ func TestKeys(t *testing.T) {
 		succSorted("KEYS", `[]*`), // nothing
 	)
 }
+
+func TestRandom(t *testing.T) {
+	testCommands(t,
+		succ("RANDOMKEY"),
+		// A random key from a DB with a single key. We can test that.
+		succ("SET", "one", "1"),
+		succ("RANDOMKEY"),
+
+		// Simple failure cases
+		fail("RANDOMKEY", "bar"),
+	)
+}
