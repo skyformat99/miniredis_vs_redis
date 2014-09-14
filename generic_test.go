@@ -44,3 +44,11 @@ func TestRandom(t *testing.T) {
 		fail("RANDOMKEY", "bar"),
 	)
 }
+
+func TestUnknownCommand(t *testing.T) {
+	// Can't compare; we get a different message from redeo
+	// testCommands(t,
+	// fail("NOSUCH"),
+	// succ("SET", "foo", "bar"),
+	// )
+}
