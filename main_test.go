@@ -74,13 +74,16 @@ func TestMset(t *testing.T) {
 		succ("MSETNX", "one", "two", "three", "four"),
 		succ("MSETNX", "11", "12", "11", "14"), // double key
 		succ("GET", "11"),
+
+		// Wrong type of key doesn't matter
+		succ("HSET", "aap", "noot", "mies"),
+		succ("MSET", "aap", "again", "eight", "nine"),
+		succ("MSETNX", "aap", "again", "eight", "nine"),
+
 		// Error cases
 		fail("MSETNX"),
 		fail("MSETNX", "one"),
 		fail("MSETNX", "one", "two", "three"),
-
-		succ("HSET", "aap", "noot", "mies"),
-		succ("MSETNX", "aap", "again", "eight", "nine"),
 	)
 }
 

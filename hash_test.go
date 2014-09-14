@@ -36,6 +36,22 @@ func TestHash(t *testing.T) {
 	)
 }
 
+func TestHmset(t *testing.T) {
+	testCommands(t,
+		succ("HMSET", "aap", "noot", "mies", "vuur", "zus"),
+		succ("HGET", "aap", "noot"),
+		succ("HGET", "aap", "vuur"),
+		succ("HLEN", "aap"),
+
+		// failure cases
+		fail("HMSET", "aap"),
+		fail("HMSET", "aap", "key"),
+		fail("HMSET", "aap", "key", "value", "odd"),
+		succ("SET", "str", "I am a string"),
+		fail("HMSET", "str", "key", "value"),
+	)
+}
+
 func TestHashIncr(t *testing.T) {
 	testCommands(t,
 		succ("HINCRBY", "aap", "noot", 12),
