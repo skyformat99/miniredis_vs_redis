@@ -15,6 +15,14 @@ func TestList(t *testing.T) {
 		succ("LRANGE", "l", "0", "6"),
 		succ("LRANGE", "l", "2", "6"),
 		succ("LRANGE", "nosuch", "2", "6"),
+		succ("LPOP", "l"),
+		succ("LPOP", "l"),
+		succ("LPOP", "l"),
+		succ("LPOP", "l"),
+		succ("LPOP", "l"),
+		succ("LPOP", "l"),
+		succ("EXISTS", "l"),
+		succ("LPOP", "nosuch"),
 
 		// failure cases
 		fail("LPUSH"),
@@ -27,5 +35,7 @@ func TestList(t *testing.T) {
 		fail("LRANGE", "key", "2", "6", "toomany"),
 		fail("LRANGE", "key", "noint", "6"),
 		fail("LRANGE", "key", "2", "noint"),
+		fail("LPOP"),
+		fail("LPOP", "key", "args"),
 	)
 }
