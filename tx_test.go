@@ -123,6 +123,7 @@ func TestTx(t *testing.T) {
 	testCommands(t,
 		succ("MULTI"),
 		succ("SET", "key", "foo"),
+		succ("TYPE", "key"),
 		succ("EXPIRE", "key", 12),
 		succ("TTL", "key"),
 		succ("PEXPIRE", "key", 12),
