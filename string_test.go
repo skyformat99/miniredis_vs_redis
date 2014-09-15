@@ -419,6 +419,12 @@ func TestAppend(t *testing.T) {
 		fail("APPEND", "foo"),
 	)
 }
+func TestQuit(t *testing.T) {
+	testCommands(t,
+		succ("QUIT"),
+		fail("QUIT"),
+	)
+}
 
 func TestMove(t *testing.T) {
 	testCommands(t,
