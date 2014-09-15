@@ -52,3 +52,10 @@ func TestUnknownCommand(t *testing.T) {
 	// succ("SET", "foo", "bar"),
 	// )
 }
+
+func TestQuit(t *testing.T) {
+	testCommands(t,
+		succ("QUIT"),
+		fail("QUIT"),
+	)
+}
