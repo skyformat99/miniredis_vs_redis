@@ -10,7 +10,6 @@ import (
 	"testing"
 
 	"github.com/alicebob/miniredis"
-	"github.com/daaku/go.redis/redistest"
 	"github.com/garyburd/redigo/redis"
 )
 
@@ -60,13 +59,13 @@ func testCommands(t *testing.T, commands ...command) {
 	ok(t, err)
 	defer sMini.Close()
 
-	sReal, _ := redistest.NewServerClient(t)
+	sReal, sRealAddr := Redis()
 	defer sReal.Close()
 
 	cMini, err := redis.Dial("tcp", sMini.Addr())
 	ok(t, err)
 
-	cReal, err := redis.Dial(sReal.Proto(), sReal.Addr())
+	cReal, err := redis.Dial("tcp", sRealAddr)
 	ok(t, err)
 
 	for _, p := range commands {
