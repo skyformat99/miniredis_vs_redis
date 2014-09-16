@@ -92,3 +92,41 @@ func TestLinxed(t *testing.T) {
 		fail("LINDEX", "l", 1, "too many"),
 	)
 }
+
+func TestLlen(t *testing.T) {
+	testCommands(t,
+		succ("RPUSH", "l", "aap", "noot", "mies"),
+		succ("LLEN", "l"),
+		succ("LLEN", "nosuch"),
+
+		// failure cases
+		succ("SET", "str", "I am a string"),
+		fail("LLEN", "str"),
+		fail("LLEN"),
+		fail("LLEN", "l", "too many"),
+	)
+}
+
+func TestLtrim(t *testing.T) {
+	testCommands(t,
+		succ("RPUSH", "l", "aap", "noot", "mies"),
+		succ("LTRIM", "l", 0, 1),
+		succ("LRANGE", "l", 0, -1),
+		succ("RPUSH", "l2", "aap", "noot", "mies", "vuur"),
+		succ("LTRIM", "l2", -2, -1),
+		succ("LRANGE", "l2", 0, -1),
+		succ("RPUSH", "l3", "aap", "noot", "mies", "vuur"),
+		succ("LTRIM", "l3", -2, -1000),
+		succ("LRANGE", "l3", 0, -1),
+
+		// failure cases
+		succ("SET", "str", "I am a string"),
+		fail("LTRIM", "str", 0, 1),
+		fail("LTRIM", "l", 0, 1, "toomany"),
+		fail("LTRIM", "l", "noint", 1),
+		fail("LTRIM", "l", 0, "noint"),
+		fail("LTRIM", "l", 0),
+		fail("LTRIM", "l"),
+		fail("LTRIM"),
+	)
+}
