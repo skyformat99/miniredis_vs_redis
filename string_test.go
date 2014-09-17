@@ -4,7 +4,7 @@ import (
 	"testing"
 )
 
-func TestSet(t *testing.T) {
+func TestStringSet(t *testing.T) {
 	testCommands(t,
 		succ("SET", "foo", "bar"),
 		succ("GET", "foo"),
