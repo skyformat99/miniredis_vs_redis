@@ -4,7 +4,7 @@ import (
 	"testing"
 )
 
-func TestStringSet(t *testing.T) {
+func TestStringGetSet(t *testing.T) {
 	testCommands(t,
 		succ("SET", "foo", "bar"),
 		succ("GET", "foo"),
@@ -19,10 +19,14 @@ func TestStringSet(t *testing.T) {
 		// GETSET on a new key
 		succ("GETSET", "nosuch", "new"),
 		succ("GET", "nosuch"),
+
 		// Failure cases
 		fail("SET"),
 		fail("SET", "foo"),
 		fail("SET", "foo", "bar", "baz"),
+		fail("GET"),
+		fail("GET", "too", "many"),
+		// Wrong type
 		succ("HSET", "hash", "key", "value"),
 		fail("GET", "hash"),
 		fail("GETSET", "hash", "new"),
