@@ -43,5 +43,15 @@ func TestSortedSet(t *testing.T) {
 		fail("ZRANK", "key"),
 		fail("ZRANK", "key", "too", "many"),
 		fail("ZRANK", "str", "member"),
+
+		succ("RENAME", "z", "z2"),
+		succ("EXISTS", "z"),
+		succ("EXISTS", "z2"),
+		succ("MOVE", "z2", 3),
+		succ("EXISTS", "z2"),
+		succ("SELECT", 3),
+		succ("EXISTS", "z2"),
+		succ("DEL", "z2"),
+		succ("EXISTS", "z2"),
 	)
 }
