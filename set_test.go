@@ -37,8 +37,13 @@ func TestSet(t *testing.T) {
 		fail("SMEMBERS", "str"),
 		fail("SISMEMBER", "str", "noot"),
 		fail("SCARD", "str"),
+	)
+}
 
-		// Move a set around
+func TestSetMove(t *testing.T) {
+	// Move a set around
+	testCommands(t,
+		succ("SADD", "s", "aap", "noot", "mies"),
 		succ("RENAME", "s", "others"),
 		succSorted("SMEMBERS", "s"),
 		succSorted("SMEMBERS", "others"),
@@ -46,5 +51,21 @@ func TestSet(t *testing.T) {
 		succSorted("SMEMBERS", "others"),
 		succ("SELECT", 2),
 		succSorted("SMEMBERS", "others"),
+	)
+}
+
+func TestSetDel(t *testing.T) {
+	testCommands(t,
+		succ("SADD", "s", "aap", "noot", "mies"),
+		succ("SREM", "s", "noot", "nosuch"),
+		succ("SCARD", "s"),
+		succSorted("SMEMBERS", "s"),
+
+		// failure cases
+		fail("SREM"),
+		fail("SREM", "s"),
+		// Wrong type
+		succ("SET", "str", "I am a string"),
+		fail("SREM", "str", "noot"),
 	)
 }
