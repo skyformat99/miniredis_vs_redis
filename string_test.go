@@ -226,13 +226,17 @@ func TestIncrAndFriends(t *testing.T) {
 
 func TestBitcount(t *testing.T) {
 	testCommands(t,
-		succ("SET", "foo", "The quick brown fox jumps over the lazy dog"),
+		succ("SET", "str", "The quick brown fox jumps over the lazy dog"),
 		succ("SET", "utf8", "❆❅❄☃"),
-		succ("BITCOUNT", "foo"),
+		succ("BITCOUNT", "str"),
 		succ("BITCOUNT", "utf8"),
-		succ("BITCOUNT", "foo", 0, 0),
+		succ("BITCOUNT", "str", 0, 0),
+		succ("BITCOUNT", "str", 1, 2),
+		succ("BITCOUNT", "str", 1, -200),
+		succ("BITCOUNT", "str", -2, -1),
+		succ("BITCOUNT", "str", -2, -12),
 		succ("BITCOUNT", "utf8", 0, 0),
-		fail("BITCOUNT", "foo", 4, 2, 2, 2, 2),
+		fail("BITCOUNT", "str", 4, 2, 2, 2, 2),
 		succ("HSET", "aap", "noot", "mies"),
 		fail("BITCOUNT", "aap", 4, 2),
 	)

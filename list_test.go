@@ -14,6 +14,7 @@ func TestLPush(t *testing.T) {
 		succ("LRANGE", "l", 0, -1),
 		succ("LRANGE", "l", 0, 6),
 		succ("LRANGE", "l", 2, 6),
+		succ("LRANGE", "l", -100, -100),
 		succ("LRANGE", "nosuch", 2, 6),
 		succ("LPOP", "l"),
 		succ("LPOP", "l"),
