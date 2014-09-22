@@ -77,6 +77,14 @@ func TestSortedSetRange(t *testing.T) {
 		succ("ZRANGE", "z", 2, -2),
 		succ("ZRANGE", "z", 400, -1),
 		succ("ZRANGE", "z", 300, -110),
+		succ("ZREVRANGE", "z", 0, -1),
+		succ("ZREVRANGE", "z", 0, -1, "WITHSCORES"),
+		succ("ZREVRANGE", "z", 0, -1, "WiThScOrEs"),
+		succ("ZREVRANGE", "z", 0, -2),
+		succ("ZREVRANGE", "z", 0, -1000),
+		succ("ZREVRANGE", "z", 2, -2),
+		succ("ZREVRANGE", "z", 400, -1),
+		succ("ZREVRANGE", "z", 300, -110),
 
 		succ("ZADD", "zz",
 			0, "aap",
@@ -97,5 +105,56 @@ func TestSortedSetRange(t *testing.T) {
 		fail("ZRANGE", "foo", 2, "noint"),
 		succ("SET", "str", "I am a string"),
 		fail("ZRANGE", "str", 300, -110),
+
+		fail("ZREVRANGE"),
+		fail("ZREVRANGE", "str", 300, -110),
+	)
+}
+
+func TestSortedSetRem(t *testing.T) {
+	testCommands(t,
+		succ("ZADD", "z",
+			1, "aap",
+			2, "noot",
+			3, "mies",
+			2, "nootagain",
+			3, "miesagain",
+			math.Inf(+1), "the stars",
+			math.Inf(+1), "more stars",
+			math.Inf(-1), "big bang",
+		),
+		succ("ZREM", "z", "nosuch"),
+		succ("ZREM", "z", "mies", "nootagain"),
+		succ("ZRANGE", "z", 0, -1),
+
+		// failure cases
+		fail("ZREM"),
+		fail("ZREM", "foo"),
+		succ("SET", "str", "I am a string"),
+		fail("ZREM", "str", "member"),
+	)
+}
+
+func TestSortedSetScore(t *testing.T) {
+	testCommands(t,
+		succ("ZADD", "z",
+			1, "aap",
+			2, "noot",
+			3, "mies",
+			2, "nootagain",
+			3, "miesagain",
+			math.Inf(+1), "the stars",
+		),
+		succ("ZSCORE", "z", "mies"),
+		succ("ZSCORE", "z", "the stars"),
+		succ("ZSCORE", "z", "nosuch"),
+		succ("ZSCORE", "nosuch", "nosuch"),
+
+		// failure cases
+		fail("ZSCORE"),
+		fail("ZSCORE", "foo"),
+		fail("ZSCORE", "foo", "too", "many"),
+		succ("SET", "str", "I am a string"),
+		fail("ZSCORE", "str", "member"),
 	)
 }
