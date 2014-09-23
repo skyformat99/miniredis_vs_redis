@@ -21,6 +21,12 @@ func TestSortedSet(t *testing.T) {
 		succ("ZRANK", "z", "vuur"),
 		succ("ZRANK", "z", "nosuch"),
 		succ("ZRANK", "nosuch", "nosuch"),
+		succ("ZREVRANK", "z", "aap"),
+		succ("ZREVRANK", "z", "noot"),
+		succ("ZREVRANK", "z", "mies"),
+		succ("ZREVRANK", "z", "vuur"),
+		succ("ZREVRANK", "z", "nosuch"),
+		succ("ZREVRANK", "nosuch", "nosuch"),
 
 		succ("ZADD", "zi", "inf", "aap", "-inf", "noot", "+inf", "mies"),
 		succ("ZRANK", "zi", "noot"),
@@ -44,6 +50,8 @@ func TestSortedSet(t *testing.T) {
 		fail("ZRANK", "key"),
 		fail("ZRANK", "key", "too", "many"),
 		fail("ZRANK", "str", "member"),
+		fail("ZREVRANK"),
+		fail("ZREVRANK", "key"),
 
 		succ("RENAME", "z", "z2"),
 		succ("EXISTS", "z"),
@@ -189,6 +197,10 @@ func TestSortedSetRangeByScore(t *testing.T) {
 		succ("ZRANGEBYSCORE", "z", "1", "(3"),
 		succ("ZRANGEBYSCORE", "z", "1", "(3", "LIMIT", 0, 2),
 		succ("ZRANGEBYSCORE", "foo", 2, 3, "LIMIT", 1, 2, "WITHSCORES"),
+		succ("ZCOUNT", "z", "-inf", "inf"),
+		succ("ZCOUNT", "z", 0, 3),
+		succ("ZCOUNT", "z", 0, "inf"),
+		succ("ZCOUNT", "z", "(2", "inf"),
 
 		// Bunch of limit edge cases
 		succ("ZRANGEBYSCORE", "z", "-inf", "inf", "LIMIT", 0, 7),
@@ -223,5 +235,9 @@ func TestSortedSetRangeByScore(t *testing.T) {
 		fail("ZREVRANGEBYSCORE"),
 		fail("ZREVRANGEBYSCORE", "foo", "[4", 3),
 		fail("ZREVRANGEBYSCORE", "str", 300, -110),
+
+		fail("ZCOUNT"),
+		fail("ZCOUNT", "foo", "[4", 3),
+		fail("ZCOUNT", "str", 300, -110),
 	)
 }
