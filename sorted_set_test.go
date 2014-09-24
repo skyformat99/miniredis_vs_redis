@@ -256,12 +256,16 @@ func TestSortedSetRangeByLex(t *testing.T) {
 			12, "inf",
 		),
 		succ("ZRANGEBYLEX", "z", "-", "+"),
+		succ("ZLEXCOUNT", "z", "-", "+"),
 		succ("ZRANGEBYLEX", "z", "[o", "[three"),
+		succ("ZLEXCOUNT", "z", "[o", "[three"),
 		succ("ZRANGEBYLEX", "z", "(o", "(z"),
+		succ("ZLEXCOUNT", "z", "(o", "(z"),
 		succ("ZRANGEBYLEX", "z", "+", "(z"),
 		succ("ZRANGEBYLEX", "z", "(a", "-"),
 		succ("ZRANGEBYLEX", "z", "(z", "(a"),
 		succ("ZRANGEBYLEX", "nosuch", "-", "+"),
+		succ("ZLEXCOUNT", "nosuch", "-", "+"),
 		succ("ZRANGEBYLEX", "z", "-", "+", "LIMIT", 1, 2),
 		succ("ZRANGEBYLEX", "z", "-", "+", "LIMIT", -1, 2),
 		succ("ZRANGEBYLEX", "z", "-", "+", "LIMIT", 1, -2),
@@ -272,6 +276,7 @@ func TestSortedSetRangeByLex(t *testing.T) {
 		succ("ZADD", "z", 12, "zzzz"),
 		succ("ZRANGEBYLEX", "z", "[z", "+"),
 		succ("ZRANGEBYLEX", "z", "(z", "+"),
+		succ("ZLEXCOUNT", "z", "(z", "+"),
 
 		// failure cases
 		fail("ZRANGEBYLEX"),
@@ -290,5 +295,12 @@ func TestSortedSetRangeByLex(t *testing.T) {
 		fail("ZRANGEBYLEX", "key", "[a", "[b", "LIMIT", 1, 1, "toomany"),
 		succ("SET", "str", "I am a string"),
 		fail("ZRANGEBYLEX", "str", "[a", "[b"),
+
+		fail("ZLEXCOUNT"),
+		fail("ZLEXCOUNT", "key"),
+		fail("ZLEXCOUNT", "key", "[a"),
+		fail("ZLEXCOUNT", "key", "[a", "[b", "c"),
+		fail("ZLEXCOUNT", "key", "!a", "[b"),
+		fail("ZLEXCOUNT", "str", "[a", "[b"),
 	)
 }
