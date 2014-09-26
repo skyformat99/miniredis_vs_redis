@@ -59,3 +59,29 @@ func TestQuit(t *testing.T) {
 		fail("QUIT"),
 	)
 }
+
+func TestRename(t *testing.T) {
+	testCommands(t,
+		// No 'a' key
+		fail("RENAME", "a", "b"),
+
+		// Move a key with the TTL.
+		succ("SET", "a", "3"),
+		succ("EXPIRE", "a", "123"),
+		succ("SET", "b", "12"),
+		succ("RENAME", "a", "b"),
+		succ("EXISTS", "a"),
+		succ("GET", "a"),
+		succ("TYPE", "a"),
+		succ("TTL", "a"),
+		succ("EXISTS", "b"),
+		succ("GET", "b"),
+		succ("TYPE", "b"),
+		succ("TTL", "b"),
+
+		// Error cases
+		fail("RENAME"),
+		fail("RENAME", "a"),
+		fail("RENAME", "a", "b", "toomany"),
+	)
+}
