@@ -304,3 +304,24 @@ func TestSortedSetRangeByLex(t *testing.T) {
 		fail("ZLEXCOUNT", "str", "[a", "[b"),
 	)
 }
+
+func TestSortedSetIncyby(t *testing.T) {
+	testCommands(t,
+		succ("ZINCRBY", "z", 1.0, "m"),
+		succ("ZINCRBY", "z", 1.0, "m"),
+		succ("ZINCRBY", "z", 1.0, "m"),
+		succ("ZINCRBY", "z", 2.0, "m"),
+		succ("ZINCRBY", "z", 3, "m2"),
+		succ("ZINCRBY", "z", 3, "m2"),
+		succ("ZINCRBY", "z", 3, "m2"),
+
+		// failure cases
+		fail("ZINCRBY"),
+		fail("ZINCRBY", "key"),
+		fail("ZINCRBY", "key", 1.0),
+		fail("ZINCRBY", "key", "nofloat", "m"),
+		fail("ZINCRBY", "key", 1.0, "too", "many"),
+		succ("SET", "str", "I am a string"),
+		fail("ZINCRBY", "str", 1.0, "member"),
+	)
+}
