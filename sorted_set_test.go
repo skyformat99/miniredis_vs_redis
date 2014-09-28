@@ -143,6 +143,36 @@ func TestSortedSetRem(t *testing.T) {
 	)
 }
 
+func TestSortedSetRemRangeByLex(t *testing.T) {
+	testCommands(t,
+		succ("ZADD", "z",
+			12, "zero kelvin",
+			12, "minusfour",
+			12, "one",
+			12, "oneone",
+			12, "two",
+			12, "zwei",
+			12, "three",
+			12, "drei",
+			12, "inf",
+		),
+		succ("ZRANGEBYLEX", "z", "-", "+"),
+		succ("ZREMRANGEBYLEX", "z", "[o", "(t"),
+		succ("ZRANGEBYLEX", "z", "-", "+"),
+		succ("ZREMRANGEBYLEX", "z", "-", "+"),
+		succ("ZRANGEBYLEX", "z", "-", "+"),
+
+		// failure cases
+		fail("ZREMRANGEBYLEX"),
+		fail("ZREMRANGEBYLEX", "key"),
+		fail("ZREMRANGEBYLEX", "key", "[a"),
+		fail("ZREMRANGEBYLEX", "key", "[a", "[b", "c"),
+		fail("ZREMRANGEBYLEX", "key", "!a", "[b"),
+		succ("SET", "str", "I am a string"),
+		fail("ZREMRANGEBYLEX", "str", "[a", "[b"),
+	)
+}
+
 func TestSortedSetScore(t *testing.T) {
 	testCommands(t,
 		succ("ZADD", "z",
