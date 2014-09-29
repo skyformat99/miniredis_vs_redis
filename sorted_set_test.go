@@ -173,6 +173,74 @@ func TestSortedSetRemRangeByLex(t *testing.T) {
 	)
 }
 
+func TestSortedSetRemRangeByRank(t *testing.T) {
+	testCommands(t,
+		succ("ZADD", "z",
+			12, "zero kelvin",
+			12, "minusfour",
+			12, "one",
+			12, "oneone",
+			12, "two",
+			12, "zwei",
+			12, "three",
+			12, "drei",
+			12, "inf",
+		),
+		succ("ZREMRANGEBYRANK", "z", -2, -1),
+		succ("ZRANGE", "z", 0, -1),
+		succ("ZRANGEBYSCORE", "z", "-inf", "inf"),
+		succ("ZREMRANGEBYRANK", "z", -2, -1),
+		succ("ZRANGE", "z", 0, -1),
+		succ("ZREMRANGEBYRANK", "z", 0, -1),
+		succ("EXISTS", "z"),
+
+		succ("ZREMRANGEBYRANK", "nosuch", -2, -1),
+
+		// failure cases
+		fail("ZREMRANGEBYRANK"),
+		fail("ZREMRANGEBYRANK", "key"),
+		fail("ZREMRANGEBYRANK", "key", 0),
+		fail("ZREMRANGEBYRANK", "key", "noint", -1),
+		fail("ZREMRANGEBYRANK", "key", 0, "noint"),
+		fail("ZREMRANGEBYRANK", "key", "0", "1", "too many"),
+		succ("SET", "str", "I am a string"),
+		fail("ZREMRANGEBYRANK", "str", "0", "-1"),
+	)
+}
+
+func TestSortedSetRemRangeByScore(t *testing.T) {
+	testCommands(t,
+		succ("ZADD", "z",
+			1, "aap",
+			2, "noot",
+			3, "mies",
+			2, "nootagain",
+			3, "miesagain",
+			math.Inf(+1), "the stars",
+			math.Inf(+1), "more stars",
+			math.Inf(-1), "big bang",
+		),
+		succ("ZREMRANGEBYSCORE", "z", "-inf", "(2"),
+		succ("ZRANGE", "z", 0, -1),
+		succ("ZREMRANGEBYSCORE", "z", "(1000", "(2000"),
+		succ("ZRANGE", "z", 0, -1),
+		succ("ZREMRANGEBYSCORE", "z", "-inf", "+inf"),
+		succ("EXISTS", "z"),
+
+		succ("ZREMRANGEBYSCORE", "nosuch", "-inf", "inf"),
+
+		// failure cases
+		fail("ZREMRANGEBYSCORE"),
+		fail("ZREMRANGEBYSCORE", "key"),
+		fail("ZREMRANGEBYSCORE", "key", 0),
+		fail("ZREMRANGEBYSCORE", "key", "noint", -1),
+		fail("ZREMRANGEBYSCORE", "key", 0, "noint"),
+		fail("ZREMRANGEBYSCORE", "key", "0", "1", "too many"),
+		succ("SET", "str", "I am a string"),
+		fail("ZREMRANGEBYSCORE", "str", "0", "-1"),
+	)
+}
+
 func TestSortedSetScore(t *testing.T) {
 	testCommands(t,
 		succ("ZADD", "z",
