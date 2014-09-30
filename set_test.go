@@ -69,3 +69,40 @@ func TestSetDel(t *testing.T) {
 		fail("SREM", "str", "noot"),
 	)
 }
+
+func TestSetSMove(t *testing.T) {
+	testCommands(t,
+		succ("SADD", "s", "aap", "noot", "mies"),
+		succ("SMOVE", "s", "s2", "aap"),
+		succ("SCARD", "s"),
+		succ("SCARD", "s2"),
+		succ("SMOVE", "s", "s2", "nosuch"),
+		succ("SCARD", "s"),
+		succ("SCARD", "s2"),
+		succ("SMOVE", "s", "nosuch", "noot"),
+		succ("SCARD", "s"),
+		succ("SCARD", "s2"),
+
+		succ("SMOVE", "s", "s2", "mies"),
+		succ("SCARD", "s"),
+		succ("EXISTS", "s"),
+		succ("SCARD", "s2"),
+		succ("EXISTS", "s2"),
+
+		succ("SMOVE", "s2", "s2", "mies"),
+
+		succ("SADD", "s5", "aap"),
+		succ("SADD", "s6", "aap"),
+		succ("SMOVE", "s5", "s6", "aap"),
+
+		// failure cases
+		fail("SMOVE"),
+		fail("SMOVE", "s"),
+		fail("SMOVE", "s", "s2"),
+		fail("SMOVE", "s", "s2", "too", "many"),
+		// Wrong type
+		succ("SET", "str", "I am a string"),
+		fail("SMOVE", "str", "s2", "noot"),
+		fail("SMOVE", "s2", "str", "noot"),
+	)
+}
