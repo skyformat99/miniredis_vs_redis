@@ -131,3 +131,26 @@ func TestLtrim(t *testing.T) {
 		fail("LTRIM"),
 	)
 }
+
+func TestLrem(t *testing.T) {
+	testCommands(t,
+		succ("RPUSH", "l", "aap", "noot", "mies", "mies", "mies"),
+		succ("LREM", "l", 1, "mies"),
+		succ("LRANGE", "l", 0, -1),
+		succ("RPUSH", "l2", "aap", "noot", "mies", "mies", "mies"),
+		succ("LREM", "l2", -2, "mies"),
+		succ("LRANGE", "l2", 0, -1),
+		succ("RPUSH", "l3", "aap", "noot", "mies", "mies", "mies"),
+		succ("LREM", "l3", 0, "mies"),
+		succ("LRANGE", "l3", 0, -1),
+
+		// failure cases
+		succ("SET", "str", "I am a string"),
+		fail("LREM", "str", 0, "aap"),
+		fail("LREM", "l", 0, "aap", "toomany"),
+		fail("LREM", "l", "noint", "aap"),
+		fail("LREM", "l", 0),
+		fail("LREM", "l"),
+		fail("LREM"),
+	)
+}
