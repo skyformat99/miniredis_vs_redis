@@ -154,3 +154,28 @@ func TestLrem(t *testing.T) {
 		fail("LREM"),
 	)
 }
+
+func TestLinsert(t *testing.T) {
+	testCommands(t,
+		succ("RPUSH", "l", "aap", "noot", "mies", "mies", "mies!"),
+		succ("LINSERT", "l", "before", "aap", "1"),
+		succ("LINSERT", "l", "before", "noot", "2"),
+		succ("LINSERT", "l", "after", "mies!", "3"),
+		succ("LINSERT", "l", "after", "mies", "4"),
+		succ("LINSERT", "l", "after", "nosuch", "0"),
+		succ("LINSERT", "nosuch", "after", "nosuch", "0"),
+		succ("LRANGE", "l", 0, -1),
+		succ("LINSERT", "l", "AfTeR", "mies", "4"),
+		succ("LRANGE", "l", 0, -1),
+
+		// failure cases
+		fail("LINSERT"),
+		fail("LINSERT", "l"),
+		fail("LINSERT", "l", "before"),
+		fail("LINSERT", "l", "before", "aap"),
+		fail("LINSERT", "l", "before", "aap", "too", "many"),
+		fail("LINSERT", "l", "What?", "aap", "noot"),
+		succ("SET", "str", "I am a string"),
+		fail("LINSERT", "str", "before", "aap", "noot"),
+	)
+}
