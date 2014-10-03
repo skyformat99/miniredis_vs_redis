@@ -18,6 +18,10 @@ func TestKeys(t *testing.T) {
 		succSorted("KEYS", `t\*`),
 		succSorted("KEYS", `[tf]*`),
 
+		// zero length key
+		succ("SET", "", "nothing"),
+		succ("GET", ""),
+
 		// Simple failure cases
 		fail("KEYS"),
 		fail("KEYS", "foo", "bar"),

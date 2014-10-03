@@ -41,6 +41,25 @@ func TestLPush(t *testing.T) {
 	)
 }
 
+func TestLPushx(t *testing.T) {
+	testCommands(t,
+		succ("LPUSHX", "l", "aap"),
+		succ("EXISTS", "l"),
+		succ("LRANGE", "l", 0, -1),
+		succ("LPUSH", "l", "noot"),
+		succ("LPUSHX", "l", "mies"),
+		succ("EXISTS", "l"),
+		succ("LRANGE", "l", 0, -1),
+
+		// failure cases
+		fail("LPUSHX"),
+		fail("LPUSHX", "l"),
+		fail("LPUSHX", "too", "many", "args"),
+		succ("SET", "str", "I am a string"),
+		fail("LPUSHX", "str", "mies"),
+	)
+}
+
 func TestRPush(t *testing.T) {
 	testCommands(t,
 		succ("RPUSH", "l", "aap", "noot", "mies"),
@@ -155,6 +174,28 @@ func TestLrem(t *testing.T) {
 	)
 }
 
+func TestLset(t *testing.T) {
+	testCommands(t,
+		succ("RPUSH", "l", "aap", "noot", "mies", "mies", "mies"),
+		succ("LSET", "l", 1, "[cencored]"),
+		succ("LRANGE", "l", 0, -1),
+		succ("LSET", "l", -1, "[cencored]"),
+		succ("LRANGE", "l", 0, -1),
+		fail("LSET", "l", 1000, "new"),
+		fail("LSET", "l", -7000, "new"),
+		fail("LSET", "nosuch", 1, "new"),
+
+		// failure cases
+		fail("LSET"),
+		fail("LSET", "l"),
+		fail("LSET", "l", 0),
+		fail("LSET", "l", "noint", "aap"),
+		fail("LSET", "l", 0, "aap", "toomany"),
+		succ("SET", "str", "I am a string"),
+		fail("LSET", "str", 0, "aap"),
+	)
+}
+
 func TestLinsert(t *testing.T) {
 	testCommands(t,
 		succ("RPUSH", "l", "aap", "noot", "mies", "mies", "mies!"),
@@ -177,5 +218,58 @@ func TestLinsert(t *testing.T) {
 		fail("LINSERT", "l", "What?", "aap", "noot"),
 		succ("SET", "str", "I am a string"),
 		fail("LINSERT", "str", "before", "aap", "noot"),
+	)
+}
+
+func TestRpoplpush(t *testing.T) {
+	testCommands(t,
+		succ("RPUSH", "l", "aap", "noot", "mies"),
+		succ("RPOPLPUSH", "l", "l2"),
+		succ("LRANGE", "l", 0, -1),
+		succ("LRANGE", "2l", 0, -1),
+		succ("RPOPLPUSH", "l", "l2"),
+		succ("RPOPLPUSH", "l", "l2"),
+		succ("RPOPLPUSH", "l", "l2"), // now empty
+		succ("EXISTS", "l"),
+		succ("LRANGE", "2l", 0, -1),
+
+		succ("RPUSH", "round", "aap", "noot", "mies"),
+		succ("RPOPLPUSH", "round", "round"),
+		succ("LRANGE", "round", 0, -1),
+		succ("RPOPLPUSH", "round", "round"),
+		succ("RPOPLPUSH", "round", "round"),
+		succ("RPOPLPUSH", "round", "round"),
+		succ("RPOPLPUSH", "round", "round"),
+		succ("LRANGE", "round", 0, -1),
+
+		// failure cases
+		succ("RPUSH", "chk", "aap", "noot", "mies"),
+		fail("RPOPLPUSH"),
+		fail("RPOPLPUSH", "chk"),
+		fail("RPOPLPUSH", "chk", "too", "many"),
+		succ("SET", "str", "I am a string"),
+		fail("RPOPLPUSH", "chk", "str"),
+		fail("RPOPLPUSH", "str", "chk"),
+		succ("LRANGE", "chk", 0, -1),
+	)
+}
+
+func TestRpushx(t *testing.T) {
+	testCommands(t,
+		succ("RPUSHX", "l", "aap"),
+		succ("EXISTS", "l"),
+		succ("RPUSH", "l", "noot", "mies"),
+		succ("RPUSHX", "l", "vuur"),
+		succ("EXISTS", "l"),
+		succ("LRANGE", "l", 0, -1),
+
+		// failure cases
+		succ("RPUSH", "chk", "noot", "mies"),
+		fail("RPUSHX"),
+		fail("RPUSHX", "chk"),
+		fail("RPUSHX", "chk", "too", "many"),
+		succ("LRANGE", "chk", 0, -1),
+		succ("SET", "str", "I am a string"),
+		fail("RPUSHX", "str", "value"),
 	)
 }
