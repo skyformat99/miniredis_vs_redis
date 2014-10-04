@@ -106,3 +106,44 @@ func TestSetSMove(t *testing.T) {
 		fail("SMOVE", "s2", "str", "noot"),
 	)
 }
+
+func TestSetSpop(t *testing.T) {
+	testCommands(t,
+		// Set with a single member...
+		succ("SADD", "s", "aap"),
+		succ("SPOP", "s"),
+		succ("EXISTS", "s"),
+
+		succ("SPOP", "nosuch"),
+
+		// failure cases
+		fail("SPOP"),
+		fail("SPOP", "s", "s2"),
+		// Wrong type
+		succ("SET", "str", "I am a string"),
+		fail("SPOP", "str"),
+	)
+}
+
+func TestSetSrandmember(t *testing.T) {
+	testCommands(t,
+		// Set with a single member...
+		succ("SADD", "s", "aap"),
+		succ("SRANDMEMBER", "s"),
+		succ("SRANDMEMBER", "s", 1),
+		succ("SRANDMEMBER", "s", 5),
+		succ("SRANDMEMBER", "s", -1),
+		succ("SRANDMEMBER", "s", -5),
+
+		succ("SRANDMEMBER", "s", 0),
+		succ("SPOP", "nosuch"),
+
+		// failure cases
+		fail("SRANDMEMBER"),
+		fail("SRANDMEMBER", "s", "noint"),
+		fail("SRANDMEMBER", "s", 1, "toomany"),
+		// Wrong type
+		succ("SET", "str", "I am a string"),
+		fail("SRANDMEMBER", "str"),
+	)
+}
