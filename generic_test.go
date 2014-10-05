@@ -89,3 +89,33 @@ func TestRename(t *testing.T) {
 		fail("RENAME", "a", "b", "toomany"),
 	)
 }
+
+func TestScan(t *testing.T) {
+	testCommands(t,
+		// No keys yet
+		succ("SCAN", 0),
+
+		succ("SET", "key", "value"),
+		succ("SCAN", 0),
+		succ("SCAN", 0, "COUNT", 12),
+		succ("SCAN", 0, "cOuNt", 12),
+
+		succ("SET", "anotherkey", "value"),
+		succ("SCAN", 0, "MATCH", "anoth*"),
+		succ("SCAN", 0, "MATCH", "anoth*", "COUNT", 100),
+		succ("SCAN", 0, "COUNT", 100, "MATCH", "anoth*"),
+
+		// Can't really test multiple keys.
+		// succ("SET", "key2", "value2"),
+		// succ("SCAN", 0),
+
+		// Error cases
+		fail("SCAN"),
+		fail("SCAN", "noint"),
+		fail("SCAN", 0, "COUNT", "noint"),
+		fail("SCAN", 0, "COUNT"),
+		fail("SCAN", 0, "MATCH"),
+		fail("SCAN", 0, "garbage"),
+		fail("SCAN", 0, "COUNT", 12, "MATCH", "foo", "garbage"),
+	)
+}
