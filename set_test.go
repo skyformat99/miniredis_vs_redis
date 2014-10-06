@@ -147,3 +147,32 @@ func TestSetSrandmember(t *testing.T) {
 		fail("SRANDMEMBER", "str"),
 	)
 }
+
+func TestSetSdiff(t *testing.T) {
+	testCommands(t,
+		succ("SDIFF", "s1", "aap", "noot", "mies"),
+		succ("SDIFF", "s2", "noot", "mies", "vuur"),
+		succ("SDIFF", "s3", "mies", "wim"),
+		succ("SDIFF", "s1"),
+		succ("SDIFF", "s1", "s2"),
+		succ("SDIFF", "s1", "s2", "s3"),
+		succ("SDIFF", "nosuch"),
+		succ("SDIFF", "s1", "nosuch", "s2", "nosuch", "s3"),
+		succ("SDIFF", "s1", "s1"),
+
+		succ("SDIFFSTORE", "res", "s3", "nosuch", "s1"),
+		succ("SMEMBERS", "res"),
+
+		// failure cases
+		fail("SDIFF"),
+		fail("SDIFFSTORE"),
+		fail("SDIFFSTORE", "key"),
+		// Wrong type
+		succ("SET", "str", "I am a string"),
+		fail("SDIFF", "s1", "str"),
+		fail("SDIFF", "nosuch", "str"),
+		fail("SDIFF", "str", "s1"),
+		fail("SDIFFSTORE", "res", "str", "s1"),
+		fail("SDIFFSTORE", "res", "s1", "str"),
+	)
+}
