@@ -176,3 +176,61 @@ func TestSetSdiff(t *testing.T) {
 		fail("SDIFFSTORE", "res", "s1", "str"),
 	)
 }
+
+func TestSetSinter(t *testing.T) {
+	testCommands(t,
+		succ("SINTER", "s1", "aap", "noot", "mies"),
+		succ("SINTER", "s2", "noot", "mies", "vuur"),
+		succ("SINTER", "s3", "mies", "wim"),
+		succ("SINTER", "s1"),
+		succ("SINTER", "s1", "s2"),
+		succ("SINTER", "s1", "s2", "s3"),
+		succ("SINTER", "nosuch"),
+		succ("SINTER", "s1", "nosuch", "s2", "nosuch", "s3"),
+		succ("SINTER", "s1", "s1"),
+
+		succ("SINTERSTORE", "res", "s3", "nosuch", "s1"),
+		succ("SMEMBERS", "res"),
+
+		// failure cases
+		fail("SINTER"),
+		fail("SINTERSTORE"),
+		fail("SINTERSTORE", "key"),
+		// Wrong type
+		succ("SET", "str", "I am a string"),
+		succ("SINTER", "s1", "str"),     // !
+		succ("SINTER", "nosuch", "str"), // !
+		fail("SINTER", "str", "s1"),
+		fail("SINTERSTORE", "res", "str", "s1"),
+		succ("SINTERSTORE", "res", "s1", "str"), // !
+	)
+}
+
+func TestSetSunion(t *testing.T) {
+	testCommands(t,
+		succ("SUNION", "s1", "aap", "noot", "mies"),
+		succ("SUNION", "s2", "noot", "mies", "vuur"),
+		succ("SUNION", "s3", "mies", "wim"),
+		succ("SUNION", "s1"),
+		succ("SUNION", "s1", "s2"),
+		succ("SUNION", "s1", "s2", "s3"),
+		succ("SUNION", "nosuch"),
+		succ("SUNION", "s1", "nosuch", "s2", "nosuch", "s3"),
+		succ("SUNION", "s1", "s1"),
+
+		succ("SUNIONSTORE", "res", "s3", "nosuch", "s1"),
+		succ("SMEMBERS", "res"),
+
+		// failure cases
+		fail("SUNION"),
+		fail("SUNIONSTORE"),
+		fail("SUNIONSTORE", "key"),
+		// Wrong type
+		succ("SET", "str", "I am a string"),
+		fail("SUNION", "s1", "str"),
+		fail("SUNION", "nosuch", "str"),
+		fail("SUNION", "str", "s1"),
+		fail("SUNIONSTORE", "res", "str", "s1"),
+		fail("SUNIONSTORE", "res", "s1", "str"),
+	)
+}
