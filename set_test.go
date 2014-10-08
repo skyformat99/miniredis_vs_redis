@@ -234,3 +234,35 @@ func TestSetSunion(t *testing.T) {
 		fail("SUNIONSTORE", "res", "s1", "str"),
 	)
 }
+
+func TestSscan(t *testing.T) {
+	testCommands(t,
+		// No set yet
+		succ("SSCAN", "set", 0),
+
+		succ("SADD", "set", "key1"),
+		succ("SSCAN", "set", 0),
+		succ("SSCAN", "set", 0, "COUNT", 12),
+		succ("SSCAN", "set", 0, "cOuNt", 12),
+
+		succ("SADD", "set", "anotherkey"),
+		succ("SSCAN", "set", 0, "MATCH", "anoth*"),
+		succ("SSCAN", "set", 0, "MATCH", "anoth*", "COUNT", 100),
+		succ("SSCAN", "set", 0, "COUNT", 100, "MATCH", "anoth*"),
+
+		// Can't really test multiple keys.
+		// succ("SET", "key2", "value2"),
+		// succ("SCAN", 0),
+
+		// Error cases
+		fail("SSCAN"),
+		fail("SSCAN", "noint"),
+		fail("SSCAN", "set", 0, "COUNT", "noint"),
+		fail("SSCAN", "set", 0, "COUNT"),
+		fail("SSCAN", "set", 0, "MATCH"),
+		fail("SSCAN", "set", 0, "garbage"),
+		fail("SSCAN", "set", 0, "COUNT", 12, "MATCH", "foo", "garbage"),
+		succ("SET", "str", "1"),
+		fail("SSCAN", "str", 0),
+	)
+}
