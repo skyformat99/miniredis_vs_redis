@@ -87,3 +87,36 @@ func TestHashIncr(t *testing.T) {
 		succ("HINCRBYFLOAT", "aap", "noot", 12),
 	)
 }
+
+func TestHscan(t *testing.T) {
+	testCommands(t,
+		// No set yet
+		succ("HSCAN", "h", 0),
+
+		succ("HSET", "h", "key1", "value1"),
+		succ("HSCAN", "h", 0),
+		succ("HSCAN", "h", 0, "COUNT", 12),
+		succ("HSCAN", "h", 0, "cOuNt", 12),
+
+		succ("HSET", "h", "anotherkey", "value2"),
+		succ("HSCAN", "h", 0, "MATCH", "anoth*"),
+		succ("HSCAN", "h", 0, "MATCH", "anoth*", "COUNT", 100),
+		succ("HSCAN", "h", 0, "COUNT", 100, "MATCH", "anoth*"),
+
+		// Can't really test multiple keys.
+		// succ("SET", "key2", "value2"),
+		// succ("SCAN", 0),
+
+		// Error cases
+		fail("HSCAN"),
+		fail("HSCAN", "noint"),
+		fail("HSCAN", "h", 0, "COUNT", "noint"),
+		fail("HSCAN", "h", 0, "COUNT"),
+		fail("HSCAN", "h", 0, "MATCH"),
+		fail("HSCAN", "h", 0, "garbage"),
+		fail("HSCAN", "h", 0, "COUNT", 12, "MATCH", "foo", "garbage"),
+		// fail("HSCAN", "nosuch", 0, "COUNT", "garbage"),
+		succ("SET", "str", "1"),
+		fail("HSCAN", "str", 0),
+	)
+}
