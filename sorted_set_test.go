@@ -423,3 +423,36 @@ func TestSortedSetIncyby(t *testing.T) {
 		fail("ZINCRBY", "str", 1.0, "member"),
 	)
 }
+
+func TestZscan(t *testing.T) {
+	testCommands(t,
+		// No set yet
+		succ("ZSCAN", "h", 0),
+
+		succ("ZADD", "h", 1.0, "key1"),
+		succ("ZSCAN", "h", 0),
+		succ("ZSCAN", "h", 0, "COUNT", 12),
+		succ("ZSCAN", "h", 0, "cOuNt", 12),
+
+		succ("ZADD", "h", 2.0, "anotherkey"),
+		succ("ZSCAN", "h", 0, "MATCH", "anoth*"),
+		succ("ZSCAN", "h", 0, "MATCH", "anoth*", "COUNT", 100),
+		succ("ZSCAN", "h", 0, "COUNT", 100, "MATCH", "anoth*"),
+
+		// Can't really test multiple keys.
+		// succ("SET", "key2", "value2"),
+		// succ("SCAN", 0),
+
+		// Error cases
+		fail("ZSCAN"),
+		fail("ZSCAN", "noint"),
+		fail("ZSCAN", "h", 0, "COUNT", "noint"),
+		fail("ZSCAN", "h", 0, "COUNT"),
+		fail("ZSCAN", "h", 0, "MATCH"),
+		fail("ZSCAN", "h", 0, "garbage"),
+		fail("ZSCAN", "h", 0, "COUNT", 12, "MATCH", "foo", "garbage"),
+		// fail("ZSCAN", "nosuch", 0, "COUNT", "garbage"),
+		succ("SET", "str", "1"),
+		fail("ZSCAN", "str", 0),
+	)
+}
