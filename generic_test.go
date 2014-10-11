@@ -90,6 +90,30 @@ func TestRename(t *testing.T) {
 	)
 }
 
+func TestRenamenx(t *testing.T) {
+	testCommands(t,
+		// No 'a' key
+		fail("RENAMENX", "a", "b"),
+
+		succ("SET", "a", "value"),
+		succ("SET", "str", "value"),
+		succ("RENAMENX", "a", "str"),
+		succ("EXISTS", "a"),
+		succ("EXISTS", "str"),
+		succ("GET", "a"),
+		succ("GET", "str"),
+
+		succ("RENAMENX", "a", "nosuch"),
+		succ("EXISTS", "a"),
+		succ("EXISTS", "nosuch"),
+
+		// Error cases
+		fail("RENAMENX"),
+		fail("RENAMENX", "a"),
+		fail("RENAMENX", "a", "b", "toomany"),
+	)
+}
+
 func TestScan(t *testing.T) {
 	testCommands(t,
 		// No keys yet
