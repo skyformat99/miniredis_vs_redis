@@ -456,3 +456,42 @@ func TestZscan(t *testing.T) {
 		fail("ZSCAN", "str", 0),
 	)
 }
+
+func TestZunionstore(t *testing.T) {
+	testCommands(t,
+		succ("ZADD", "h1", 1.0, "key1"),
+		succ("ZADD", "h1", 2.0, "key2"),
+		succ("ZADD", "h2", 1.0, "key1"),
+		succ("ZADD", "h2", 4.0, "key2"),
+		succ("ZUNIONSTORE", "res", 2, "h1", "h2"),
+		succ("ZRANGE", "res", 0, -1, "WITHSCORES"),
+
+		succ("ZUNIONSTORE", "weighted", 2, "h1", "h2", "WEIGHTS", "2.0", "12"),
+		succ("ZRANGE", "weighted", 0, -1, "WITHSCORES"),
+		succ("ZUNIONSTORE", "weighted2", 2, "h1", "h2", "WEIGHTS", "2", "-12"),
+		succ("ZRANGE", "weighted2", 0, -1, "WITHSCORES"),
+
+		succ("ZUNIONSTORE", "amin", 2, "h1", "h2", "AGGREGATE", "min"),
+		succ("ZRANGE", "amin", 0, -1, "WITHSCORES"),
+		succ("ZUNIONSTORE", "amax", 2, "h1", "h2", "AGGREGATE", "max"),
+		succ("ZRANGE", "amax", 0, -1, "WITHSCORES"),
+		succ("ZUNIONSTORE", "asum", 2, "h1", "h2", "AGGREGATE", "sum"),
+		succ("ZRANGE", "asum", 0, -1, "WITHSCORES"),
+
+		// Error cases
+		fail("ZUNIONSTORE"),
+		fail("ZUNIONSTORE", "h"),
+		fail("ZUNIONSTORE", "h", "noint"),
+		fail("ZUNIONSTORE", "h", 0, "f"),
+		fail("ZUNIONSTORE", "h", 2, "f"),
+		fail("ZUNIONSTORE", "h", -1, "f"),
+		fail("ZUNIONSTORE", "h", 2, "f1", "f2", "f3"),
+		fail("ZUNIONSTORE", "h", 2, "f1", "f2", "WEIGHTS"),
+		fail("ZUNIONSTORE", "h", 2, "f1", "f2", "WEIGHTS", 1),
+		fail("ZUNIONSTORE", "h", 2, "f1", "f2", "WEIGHTS", 1, 2, 3),
+		fail("ZUNIONSTORE", "h", 2, "f1", "f2", "WEIGHTS", "f", 2),
+		fail("ZUNIONSTORE", "h", 2, "f1", "f2", "AGGREGATE", "foo"),
+		succ("SET", "str", "1"),
+		fail("ZUNIONSTORE", "h", 1, "str"),
+	)
+}
