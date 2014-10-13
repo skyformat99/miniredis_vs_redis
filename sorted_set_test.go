@@ -495,3 +495,44 @@ func TestZunionstore(t *testing.T) {
 		fail("ZUNIONSTORE", "h", 1, "str"),
 	)
 }
+
+func TestZinterstore(t *testing.T) {
+	testCommands(t,
+		succ("ZADD", "h1", 1.0, "key1"),
+		succ("ZADD", "h1", 2.0, "key2"),
+		succ("ZADD", "h1", 3.0, "key3"),
+		succ("ZADD", "h2", 1.0, "key1"),
+		succ("ZADD", "h2", 4.0, "key2"),
+		succ("ZADD", "h3", 4.0, "key4"),
+		succ("ZINTERSTORE", "res", 2, "h1", "h2"),
+		succ("ZRANGE", "res", 0, -1, "WITHSCORES"),
+
+		succ("ZINTERSTORE", "weighted", 2, "h1", "h2", "WEIGHTS", "2.0", "12"),
+		succ("ZRANGE", "weighted", 0, -1, "WITHSCORES"),
+		succ("ZINTERSTORE", "weighted2", 2, "h1", "h2", "WEIGHTS", "2", "-12"),
+		succ("ZRANGE", "weighted2", 0, -1, "WITHSCORES"),
+
+		succ("ZINTERSTORE", "amin", 2, "h1", "h2", "AGGREGATE", "min"),
+		succ("ZRANGE", "amin", 0, -1, "WITHSCORES"),
+		succ("ZINTERSTORE", "amax", 2, "h1", "h2", "AGGREGATE", "max"),
+		succ("ZRANGE", "amax", 0, -1, "WITHSCORES"),
+		succ("ZINTERSTORE", "asum", 2, "h1", "h2", "AGGREGATE", "sum"),
+		succ("ZRANGE", "asum", 0, -1, "WITHSCORES"),
+
+		// Error cases
+		fail("ZINTERSTORE"),
+		fail("ZINTERSTORE", "h"),
+		fail("ZINTERSTORE", "h", "noint"),
+		fail("ZINTERSTORE", "h", 0, "f"),
+		fail("ZINTERSTORE", "h", 2, "f"),
+		fail("ZINTERSTORE", "h", -1, "f"),
+		fail("ZINTERSTORE", "h", 2, "f1", "f2", "f3"),
+		fail("ZINTERSTORE", "h", 2, "f1", "f2", "WEIGHTS"),
+		fail("ZINTERSTORE", "h", 2, "f1", "f2", "WEIGHTS", 1),
+		fail("ZINTERSTORE", "h", 2, "f1", "f2", "WEIGHTS", 1, 2, 3),
+		fail("ZINTERSTORE", "h", 2, "f1", "f2", "WEIGHTS", "f", 2),
+		fail("ZINTERSTORE", "h", 2, "f1", "f2", "AGGREGATE", "foo"),
+		succ("SET", "str", "1"),
+		fail("ZINTERSTORE", "h", 1, "str"),
+	)
+}
