@@ -36,6 +36,63 @@ func TestHash(t *testing.T) {
 	)
 }
 
+func TestHashSetnx(t *testing.T) {
+	testCommands(t,
+		succ("HSETNX", "aap", "noot", "mies"),
+		succ("EXISTS", "aap"),
+		succ("HEXISTS", "aap", "noot"),
+
+		succ("HSETNX", "aap", "noot", "mies2"),
+		succ("HGET", "aap", "noot"),
+
+		// failure cases
+		fail("HSETNX", "aap"),
+		fail("HSETNX", "aap", "noot"),
+		fail("HSETNX", "aap", "noot", "too", "many"),
+	)
+}
+
+func TestHashDelExists(t *testing.T) {
+	testCommands(t,
+		succ("HSET", "aap", "noot", "mies"),
+		succ("HSET", "aap", "vuur", "wim"),
+		succ("HEXISTS", "aap", "noot"),
+		succ("HEXISTS", "aap", "vuur"),
+		succ("HDEL", "aap", "noot"),
+		succ("HEXISTS", "aap", "noot"),
+		succ("HEXISTS", "aap", "vuur"),
+
+		succ("HEXISTS", "nosuch", "vuur"),
+
+		// failure cases
+		fail("HDEL"),
+		fail("HDEL", "aap"),
+		succ("SET", "str", "I am a string"),
+		fail("HDEL", "str", "key"),
+
+		fail("HEXISTS"),
+		fail("HEXISTS", "aap"),
+		fail("HEXISTS", "aap", "too", "many"),
+		fail("HEXISTS", "str", "field"),
+	)
+}
+
+func TestHashGetall(t *testing.T) {
+	testCommands(t,
+		succ("HSET", "aap", "noot", "mies"),
+		succ("HSET", "aap", "vuur", "wim"),
+		succ("HGETALL", "aap"),
+
+		succ("HGETALL", "nosuch"),
+
+		// failure cases
+		fail("HGETALL"),
+		fail("HGETALL", "too", "many"),
+		succ("SET", "str", "I am a string"),
+		fail("HGETALL", "str"),
+	)
+}
+
 func TestHmset(t *testing.T) {
 	testCommands(t,
 		succ("HMSET", "aap", "noot", "mies", "vuur", "zus"),

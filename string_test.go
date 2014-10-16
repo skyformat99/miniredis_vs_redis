@@ -33,6 +33,23 @@ func TestStringGetSet(t *testing.T) {
 	)
 }
 
+func TestStringSetnx(t *testing.T) {
+	testCommands(t,
+		succ("SETNX", "foo", "bar"),
+		succ("GET", "foo"),
+		succ("SETNX", "foo", "bar2"),
+		succ("GET", "foo"),
+
+		// Failure cases
+		fail("SETNX"),
+		fail("SETNX", "foo"),
+		fail("SETNX", "foo", "bar", "baz"),
+		// Wrong type
+		succ("HSET", "hash", "key", "value"),
+		succ("SETNX", "hash", "value"),
+	)
+}
+
 func TestExpire(t *testing.T) {
 	testCommands(t,
 		succ("SET", "foo", "bar"),
