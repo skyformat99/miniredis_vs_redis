@@ -4,7 +4,7 @@ import (
 	"testing"
 )
 
-func TestStringGetSet(t *testing.T) {
+func TestString(t *testing.T) {
 	testCommands(t,
 		succ("SET", "foo", "bar"),
 		succ("GET", "foo"),
@@ -13,12 +13,6 @@ func TestStringGetSet(t *testing.T) {
 		succ("SET", "foo", "bar", "EX", 100),
 		fail("SET", "foo", "bar", "EX", "noint"),
 		succ("SET", "utf8", "❆❅❄☃"),
-
-		succ("GETSET", "foo", "new"),
-		succ("GET", "foo"),
-		// GETSET on a new key
-		succ("GETSET", "nosuch", "new"),
-		succ("GET", "nosuch"),
 
 		// Failure cases
 		fail("SET"),
@@ -29,7 +23,42 @@ func TestStringGetSet(t *testing.T) {
 		// Wrong type
 		succ("HSET", "hash", "key", "value"),
 		fail("GET", "hash"),
+	)
+}
+
+func TestStringGetSet(t *testing.T) {
+	testCommands(t,
+		succ("SET", "foo", "bar"),
+		succ("GETSET", "foo", "new"),
+		succ("GET", "foo"),
+		succ("GET", "new"),
+		succ("GETSET", "nosuch", "new"),
+		succ("GET", "nosuch"),
+
+		// Failure cases
+		fail("GETSET"),
+		fail("GETSET", "foo"),
+		fail("GETSET", "foo", "bar", "baz"),
+		// Wrong type
+		succ("HSET", "hash", "key", "value"),
 		fail("GETSET", "hash", "new"),
+	)
+}
+
+func TestStringMget(t *testing.T) {
+	testCommands(t,
+		succ("SET", "foo", "bar"),
+		succ("SET", "foo2", "bar"),
+		succ("MGET", "foo"),
+		succ("MGET", "foo", "foo2"),
+		succ("MGET", "nosuch", "neither"),
+		succ("MGET", "nosuch", "neither", "foo"),
+
+		// Failure cases
+		fail("MGET"),
+		// Wrong type
+		succ("HSET", "hash", "key", "value"),
+		succ("MGET", "hash"), // not an error.
 	)
 }
 
@@ -253,7 +282,11 @@ func TestBitcount(t *testing.T) {
 		succ("BITCOUNT", "str", -2, -1),
 		succ("BITCOUNT", "str", -2, -12),
 		succ("BITCOUNT", "utf8", 0, 0),
+
+		fail("BITCOUNT"),
+		succ("BITCOUNT", "wrong", "arguments"),
 		fail("BITCOUNT", "str", 4, 2, 2, 2, 2),
+		fail("BITCOUNT", "str", "foo", 2),
 		succ("HSET", "aap", "noot", "mies"),
 		fail("BITCOUNT", "aap", 4, 2),
 	)
