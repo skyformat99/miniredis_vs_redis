@@ -4,6 +4,14 @@ import (
 	"testing"
 )
 
+func TestEcho(t *testing.T) {
+	testCommands(t,
+		succ("ECHO", "hello world"),
+		fail("ECHO", "hello", "world"),
+		fail("eChO", "hello", "world"),
+	)
+}
+
 func TestKeys(t *testing.T) {
 	testCommands(t,
 		succ("SET", "one", "1"),
