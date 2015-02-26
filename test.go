@@ -61,11 +61,25 @@ func testCommands(t *testing.T, commands ...command) {
 
 	sReal, sRealAddr := Redis()
 	defer sReal.Close()
+	runCommands(t, sRealAddr, sMini.Addr(), commands)
+}
 
-	cMini, err := redis.Dial("tcp", sMini.Addr())
+func testAuthCommands(t *testing.T, passwd string, commands ...command) {
+	sMini, err := miniredis.Run()
+	ok(t, err)
+	defer sMini.Close()
+	sMini.RequireAuth(passwd)
+
+	sReal, sRealAddr := RedisAuth(passwd)
+	defer sReal.Close()
+	runCommands(t, sRealAddr, sMini.Addr(), commands)
+}
+
+func runCommands(t *testing.T, realAddr, miniAddr string, commands []command) {
+	cMini, err := redis.Dial("tcp", miniAddr)
 	ok(t, err)
 
-	cReal, err := redis.Dial("tcp", sRealAddr)
+	cReal, err := redis.Dial("tcp", realAddr)
 	ok(t, err)
 
 	for _, p := range commands {
@@ -94,9 +108,10 @@ func testCommands(t *testing.T, commands ...command) {
 			lError(t, "error error. expected: %#v got: %#v case: %#v\n",
 				vReal, vMini, p)
 		}
-		// Sort the strings from real redis. Miniredis is always sorted.
+		// Sort the strings.
 		if p.sort {
 			sort.Sort(BytesList(vReal.([]interface{})))
+			sort.Sort(BytesList(vMini.([]interface{})))
 		}
 		if !reflect.DeepEqual(vReal, vMini) {
 			lError(t, "value error. expected: %#v got: %#v case: %#v\n",
@@ -125,39 +140,3 @@ func (b BytesList) Less(i, j int) bool {
 func (b BytesList) Swap(i, j int) {
 	b[i], b[j] = b[j], b[i]
 }
-
-/*
-func TestGet(t *testing.T) {
-	sMini, err := miniredis.Run()
-	ok(t, err)
-	defer sMini.Close()
-
-	sReal, _ := redistest.NewServerClient(t)
-	defer sReal.Close()
-
-	cMini, err := net.Dial("tcp", sMini.Addr())
-	ok(t, err)
-	cReal, err := net.Dial("tcp", sReal.Addr())
-	ok(t, err)
-
-	c := []string{"SET", "foo", "bar"}
-	cMini.Write(bulk(c...))
-	bufMini := make([]byte, 1000)
-	_, err = cMini.Read(bufMini)
-	ok(t, err)
-	cReal.Write(bulk(c...))
-	bufReal := make([]byte, 1000)
-	_, err = cReal.Read(bufReal)
-	ok(t, err)
-	equals(t, bufReal, bufMini)
-}
-
-// Commands to redis 'bulk string' format.
-func bulk(cs ...string) []byte {
-	res := fmt.Sprintf("*%d\r\n", len(cs))
-	for _, c := range cs {
-		res += fmt.Sprintf("$%d\r\n%s\r\n", len(c), c)
-	}
-	return []byte(res)
-}
-*/

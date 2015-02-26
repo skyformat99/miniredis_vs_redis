@@ -81,7 +81,7 @@ func TestHashGetall(t *testing.T) {
 	testCommands(t,
 		succ("HSET", "aap", "noot", "mies"),
 		succ("HSET", "aap", "vuur", "wim"),
-		succ("HGETALL", "aap"),
+		succSorted("HGETALL", "aap"),
 
 		succ("HGETALL", "nosuch"),
 

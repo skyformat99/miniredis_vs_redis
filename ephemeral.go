@@ -20,6 +20,16 @@ type ephemeral exec.Cmd
 // doesn't work.
 // Returns something which you'll have to Close(), and a string to give to Dial()
 func Redis() (*ephemeral, string) {
+	return runRedis("")
+}
+
+// RedisAuth starts a memory-only redis on a random port. The redis has
+// authentication enabled. See Redis()
+func RedisAuth(passwd string) (*ephemeral, string) {
+	return runRedis(fmt.Sprintf("requirepass %s", passwd))
+}
+
+func runRedis(extraConfig string) (*ephemeral, string) {
 	port := arbitraryPort()
 
 	c := exec.Command(executable, "-")
@@ -27,10 +37,9 @@ func Redis() (*ephemeral, string) {
 	if err != nil {
 		panic(err)
 	}
-	stdin.Write([]byte(fmt.Sprintf("port %d\nbind 127.0.0.1\n", port)))
+	fmt.Fprintf(stdin, "port %d\nbind 127.0.0.1\nappendonly no\n%s", port, extraConfig)
 	stdin.Close()
-	err = c.Start()
-	if err != nil {
+	if err := c.Start(); err != nil {
 		panic(err)
 	}
 
