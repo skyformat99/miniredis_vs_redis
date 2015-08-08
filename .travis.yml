@@ -7,3 +7,5 @@ script: make test
 branches:
     only:
         master
+
+sudo: false
