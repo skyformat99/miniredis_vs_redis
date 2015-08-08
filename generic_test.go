@@ -72,6 +72,19 @@ func TestQuit(t *testing.T) {
 	)
 }
 
+func TestExists(t *testing.T) {
+	testCommands(t,
+		succ("SET", "a", "3"),
+		succ("HSET", "b", "c", "d"),
+		succ("EXISTS", "a", "b"),
+		succ("EXISTS", "a", "b", "q"),
+		succ("EXISTS", "a", "b", "b", "b", "a", "q"),
+
+		// Error cases
+		fail("EXISTS"),
+	)
+}
+
 func TestRename(t *testing.T) {
 	testCommands(t,
 		// No 'a' key
