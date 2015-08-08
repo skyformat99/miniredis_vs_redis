@@ -91,7 +91,7 @@ func runCommands(t *testing.T, realAddr, miniAddr string, commands []command) {
 				continue
 			}
 			if errMini == nil {
-				lError(t, "got no error from miniredis. case: %#v\n", p)
+				lError(t, "got no error from miniredis. case: %#v real error: %s\n", p, errReal)
 				continue
 			}
 		} else {
@@ -121,7 +121,7 @@ func runCommands(t *testing.T, realAddr, miniAddr string, commands []command) {
 }
 
 func lError(t *testing.T, format string, args ...interface{}) {
-	_, file, line, _ := runtime.Caller(2)
+	_, file, line, _ := runtime.Caller(3)
 	prefix := fmt.Sprintf("%s:%d: ", filepath.Base(file), line)
 	fmt.Printf(prefix+format, args...)
 	t.Fail()

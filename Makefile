@@ -7,4 +7,4 @@ test:
 
 vet:
 	go vet
-	golint .
+	#golint .
