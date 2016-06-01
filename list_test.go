@@ -139,6 +139,11 @@ func TestLtrim(t *testing.T) {
 		succ("LTRIM", "l3", -2, -1000),
 		succ("LRANGE", "l3", 0, -1),
 
+		// remove the list
+		succ("RPUSH", "l4", "aap"),
+		succ("LTRIM", "l4", 0, -999),
+		succ("EXISTS", "l4"),
+
 		// failure cases
 		succ("SET", "str", "I am a string"),
 		fail("LTRIM", "str", 0, 1),
@@ -162,6 +167,11 @@ func TestLrem(t *testing.T) {
 		succ("RPUSH", "l3", "aap", "noot", "mies", "mies", "mies"),
 		succ("LREM", "l3", 0, "mies"),
 		succ("LRANGE", "l3", 0, -1),
+
+		// remove the list
+		succ("RPUSH", "l4", "aap"),
+		succ("LREM", "l4", 999, "aap"),
+		succ("EXISTS", "l4"),
 
 		// failure cases
 		succ("SET", "str", "I am a string"),
