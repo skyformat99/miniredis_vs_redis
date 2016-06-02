@@ -1,11 +1,9 @@
 language: go
 
-install: go get
+install:
+    go get
+    redis-server --version
 
 script: make test
-
-branches:
-    only:
-        master
 
 sudo: false
