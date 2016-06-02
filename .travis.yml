@@ -1,8 +1,7 @@
 language: go
 
 install:
-    go get
-    redis-server --version
+    go get && redis-server --version
 
 script: make test
 
