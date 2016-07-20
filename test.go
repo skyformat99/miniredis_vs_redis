@@ -14,10 +14,11 @@ import (
 )
 
 type command struct {
-	cmd   string // 'GET', 'SET', &c.
-	args  []interface{}
-	error bool // Whether the command should return an error or not.
-	sort  bool // Sort real redis's result. Used for 'keys'.
+	cmd     string // 'GET', 'SET', &c.
+	args    []interface{}
+	error   bool // Whether the command should return an error or not.
+	sort    bool // Sort real redis's result. Used for 'keys'.
+	loosely bool // Don't compare values, only structure. (for random things)
 }
 
 func succ(cmd string, args ...interface{}) command {
@@ -34,6 +35,15 @@ func succSorted(cmd string, args ...interface{}) command {
 		args:  args,
 		error: false,
 		sort:  true,
+	}
+}
+
+func succLoosely(cmd string, args ...interface{}) command {
+	return command{
+		cmd:     cmd,
+		args:    args,
+		error:   false,
+		loosely: true,
 	}
 }
 
@@ -113,9 +123,16 @@ func runCommands(t *testing.T, realAddr, miniAddr string, commands []command) {
 			sort.Sort(BytesList(vReal.([]interface{})))
 			sort.Sort(BytesList(vMini.([]interface{})))
 		}
-		if !reflect.DeepEqual(vReal, vMini) {
-			lError(t, "value error. expected: %#v got: %#v case: %#v\n",
-				vReal, vMini, p)
+		if p.loosely {
+			if !looselyEqual(vReal, vMini) {
+				lError(t, "value error. expected: %#v got: %#v case: %#v\n",
+					vReal, vMini, p)
+			}
+		} else {
+			if !reflect.DeepEqual(vReal, vMini) {
+				lError(t, "value error. expected: %#v got: %#v case: %#v\n",
+					vReal, vMini, p)
+			}
 		}
 	}
 }
@@ -139,4 +156,31 @@ func (b BytesList) Less(i, j int) bool {
 }
 func (b BytesList) Swap(i, j int) {
 	b[i], b[j] = b[j], b[i]
+}
+
+func looselyEqual(a, b interface{}) bool {
+	switch av := a.(type) {
+	case string:
+		_, ok := b.(string)
+		return ok
+	case []byte:
+		_, ok := b.([]byte)
+		return ok
+	case []interface{}:
+		bv, ok := b.([]interface{})
+		if !ok {
+			return false
+		}
+		if len(av) != len(bv) {
+			return false
+		}
+		for i, v := range av {
+			if !looselyEqual(v, bv[i]) {
+				return false
+			}
+		}
+		return true
+	default:
+		panic(fmt.Sprintf("unhandled case, got a %#v", a))
+	}
 }

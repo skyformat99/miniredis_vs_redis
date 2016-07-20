@@ -109,19 +109,46 @@ func TestSetSMove(t *testing.T) {
 
 func TestSetSpop(t *testing.T) {
 	testCommands(t,
-		// Set with a single member...
+		// Without count argument
 		succ("SADD", "s", "aap"),
 		succ("SPOP", "s"),
 		succ("EXISTS", "s"),
 
 		succ("SPOP", "nosuch"),
 
+		succ("SADD", "s", "aap"),
+		succ("SADD", "s", "noot"),
+		succ("SADD", "s", "mies"),
+		succ("SADD", "s", "noot"),
+		succ("SCARD", "s"),
+		succLoosely("SMEMBERS", "s"),
+
 		// failure cases
 		fail("SPOP"),
+		succ("SADD", "s", "aap"),
 		fail("SPOP", "s", "s2"),
+		fail("SPOP", "nosuch", "s2"),
 		// Wrong type
 		succ("SET", "str", "I am a string"),
 		fail("SPOP", "str"),
+	)
+
+	testCommands(t,
+		// With count argument
+		succ("SADD", "s", "aap"),
+		succ("SADD", "s", "noot"),
+		succ("SADD", "s", "mies"),
+		succ("SADD", "s", "vuur"),
+		succLoosely("SPOP", "s", 2),
+		succ("EXISTS", "s"),
+		succ("SCARD", "s"),
+
+		succLoosely("SPOP", "s", 200),
+		succ("SPOP", "s", 1),
+		succ("SCARD", "s"),
+
+		// failure cases
+		fail("SPOP", "foo", "one"),
 	)
 }
 
