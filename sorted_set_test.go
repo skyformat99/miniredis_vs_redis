@@ -377,6 +377,15 @@ func TestSortedSetRangeByScore(t *testing.T) {
 		fail("ZCOUNT", "foo", "[4", 3),
 		fail("ZCOUNT", "str", 300, -110),
 	)
+
+	// Issue #10
+	testCommands(t,
+		succ("ZADD", "key", "3.3", "element"),
+		succ("ZRANGEBYSCORE", "key", "3.3", "3.3"),
+		succ("ZRANGEBYSCORE", "key", "4.3", "4.3"),
+		succ("ZREVRANGEBYSCORE", "key", "3.3", "3.3"),
+		succ("ZREVRANGEBYSCORE", "key", "4.3", "4.3"),
+	)
 }
 
 func TestSortedSetRangeByLex(t *testing.T) {
