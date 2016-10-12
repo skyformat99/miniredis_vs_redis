@@ -4,6 +4,7 @@ package main
 
 import (
 	"testing"
+	"time"
 )
 
 func TestLPush(t *testing.T) {
@@ -281,5 +282,56 @@ func TestRpushx(t *testing.T) {
 		succ("LRANGE", "chk", 0, -1),
 		succ("SET", "str", "I am a string"),
 		fail("RPUSHX", "str", "value"),
+	)
+}
+
+func TestBrpop(t *testing.T) {
+	testCommands(t,
+		succ("LPUSH", "l", "one"),
+		succ("BRPOP", "l", 1),
+		succ("EXISTS", "l"),
+
+		// transaction
+		succ("MULTI"),
+		succ("BRPOP", "nosuch", 10),
+		succ("EXEC"),
+
+		// failure cases
+		fail("BRPOP"),
+		fail("BRPOP", "l"),
+		fail("BRPOP", "l", "X"),
+		fail("BRPOP", "l", ""),
+		fail("BRPOP", 1),
+		fail("BRPOP", "key", -1),
+	)
+}
+
+func TestBrpopMulti(t *testing.T) {
+	testMultiCommands(t,
+		func(r chan<- command) {
+			r <- succ("BRPOP", "key", 1)
+			r <- succ("BRPOP", "key", 1)
+			r <- succ("BRPOP", "key", 1)
+			r <- succ("BRPOP", "key", 1)
+			r <- succ("BRPOP", "key", 1) // will timeout
+		},
+		func(r chan<- command) {
+			r <- succ("LPUSH", "key", "aap", "noot", "mies")
+			time.Sleep(10 * time.Millisecond)
+			r <- succ("LPUSH", "key", "toon")
+		},
+	)
+}
+
+func TestBrpopTrans(t *testing.T) {
+	testMultiCommands(t,
+		func(r chan<- command) {
+			r <- succ("BRPOP", "key", 1)
+		},
+		func(r chan<- command) {
+			r <- succ("MULTI")
+			r <- succ("LPUSH", "key", "toon")
+			r <- succ("EXEC")
+		},
 	)
 }

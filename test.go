@@ -7,6 +7,7 @@ import (
 	"reflect"
 	"runtime"
 	"sort"
+	"sync"
 	"testing"
 
 	"github.com/alicebob/miniredis"
@@ -74,6 +75,42 @@ func testCommands(t *testing.T, commands ...command) {
 	runCommands(t, sRealAddr, sMini.Addr(), commands)
 }
 
+// like testCommands, but multiple connections
+func testMultiCommands(t *testing.T, cs ...func(chan<- command)) {
+	sMini, err := miniredis.Run()
+	ok(t, err)
+	defer sMini.Close()
+
+	sReal, realAddr := Redis()
+	defer sReal.Close()
+
+	var wg sync.WaitGroup
+	for _, c := range cs {
+		// one connections per cs
+		cMini, err := redis.Dial("tcp", sMini.Addr())
+		ok(t, err)
+
+		cReal, err := redis.Dial("tcp", realAddr)
+		ok(t, err)
+
+		wg.Add(1)
+		go func(c func(chan<- command)) {
+			defer wg.Done()
+			gen := make(chan command)
+			wg.Add(1)
+			go func() {
+				defer wg.Done()
+				c(gen)
+				close(gen)
+			}()
+			for cm := range gen {
+				runCommand(t, cMini, cReal, cm)
+			}
+		}(c)
+	}
+	wg.Wait()
+}
+
 func testAuthCommands(t *testing.T, passwd string, commands ...command) {
 	sMini, err := miniredis.Run()
 	ok(t, err)
@@ -92,47 +129,51 @@ func runCommands(t *testing.T, realAddr, miniAddr string, commands []command) {
 	cReal, err := redis.Dial("tcp", realAddr)
 	ok(t, err)
 
-	for _, p := range commands {
-		vReal, errReal := cReal.Do(p.cmd, p.args...)
-		vMini, errMini := cMini.Do(p.cmd, p.args...)
-		if p.error {
-			if errReal == nil {
-				lError(t, "got no error from realredis. case: %#v\n", p)
-				continue
-			}
-			if errMini == nil {
-				lError(t, "got no error from miniredis. case: %#v real error: %s\n", p, errReal)
-				continue
-			}
-		} else {
-			if errReal != nil {
-				lError(t, "got an error from realredis: %v. case: %#v\n", errReal, p)
-				continue
-			}
-			if errMini != nil {
-				lError(t, "got an error from miniredis: %v. case: %#v\n", errMini, p)
-				continue
-			}
+	for _, c := range commands {
+		runCommand(t, cMini, cReal, c)
+	}
+}
+
+func runCommand(t *testing.T, cMini, cReal redis.Conn, p command) {
+	vReal, errReal := cReal.Do(p.cmd, p.args...)
+	vMini, errMini := cMini.Do(p.cmd, p.args...)
+	if p.error {
+		if errReal == nil {
+			lError(t, "got no error from realredis. case: %#v\n", p)
+			return
 		}
-		if !reflect.DeepEqual(errReal, errMini) {
-			lError(t, "error error. expected: %#v got: %#v case: %#v\n",
+		if errMini == nil {
+			lError(t, "got no error from miniredis. case: %#v real error: %s\n", p, errReal)
+			return
+		}
+	} else {
+		if errReal != nil {
+			lError(t, "got an error from realredis: %v. case: %#v\n", errReal, p)
+			return
+		}
+		if errMini != nil {
+			lError(t, "got an error from miniredis: %v. case: %#v\n", errMini, p)
+			return
+		}
+	}
+	if !reflect.DeepEqual(errReal, errMini) {
+		lError(t, "error error. expected: %#v got: %#v case: %#v\n",
+			vReal, vMini, p)
+	}
+	// Sort the strings.
+	if p.sort {
+		sort.Sort(BytesList(vReal.([]interface{})))
+		sort.Sort(BytesList(vMini.([]interface{})))
+	}
+	if p.loosely {
+		if !looselyEqual(vReal, vMini) {
+			lError(t, "value error. expected: %#v got: %#v case: %#v\n",
 				vReal, vMini, p)
 		}
-		// Sort the strings.
-		if p.sort {
-			sort.Sort(BytesList(vReal.([]interface{})))
-			sort.Sort(BytesList(vMini.([]interface{})))
-		}
-		if p.loosely {
-			if !looselyEqual(vReal, vMini) {
-				lError(t, "value error. expected: %#v got: %#v case: %#v\n",
-					vReal, vMini, p)
-			}
-		} else {
-			if !reflect.DeepEqual(vReal, vMini) {
-				lError(t, "value error. expected: %#v got: %#v case: %#v\n",
-					vReal, vMini, p)
-			}
+	} else {
+		if !reflect.DeepEqual(vReal, vMini) {
+			lError(t, "value error. expected: %#v got: %#v case: %#v\n",
+				vReal, vMini, p)
 		}
 	}
 }
