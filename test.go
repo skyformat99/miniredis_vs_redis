@@ -179,7 +179,7 @@ func runCommand(t *testing.T, cMini, cReal redis.Conn, p command) {
 }
 
 func lError(t *testing.T, format string, args ...interface{}) {
-	_, file, line, _ := runtime.Caller(3)
+	_, file, line, _ := runtime.Caller(4)
 	prefix := fmt.Sprintf("%s:%d: ", filepath.Base(file), line)
 	fmt.Printf(prefix+format, args...)
 	t.Fail()

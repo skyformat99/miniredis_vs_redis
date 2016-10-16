@@ -317,7 +317,7 @@ func TestBrpopMulti(t *testing.T) {
 		},
 		func(r chan<- command) {
 			r <- succ("LPUSH", "key", "aap", "noot", "mies")
-			time.Sleep(10 * time.Millisecond)
+			time.Sleep(50 * time.Millisecond)
 			r <- succ("LPUSH", "key", "toon")
 		},
 	)
@@ -332,6 +332,37 @@ func TestBrpopTrans(t *testing.T) {
 			r <- succ("MULTI")
 			r <- succ("LPUSH", "key", "toon")
 			r <- succ("EXEC")
+		},
+	)
+}
+
+func TestBlpop(t *testing.T) {
+	testCommands(t,
+		succ("LPUSH", "l", "one"),
+		succ("BLPOP", "l", 1),
+		succ("EXISTS", "l"),
+
+		// failure cases
+		fail("BLPOP"),
+		fail("BLPOP", "l"),
+		fail("BLPOP", "l", "X"),
+		fail("BLPOP", "l", ""),
+		fail("BLPOP", 1),
+		fail("BLPOP", "key", -1),
+	)
+
+	testMultiCommands(t,
+		func(r chan<- command) {
+			r <- succ("BLPOP", "key", 1)
+			r <- succ("BLPOP", "key", 1)
+			r <- succ("BLPOP", "key", 1)
+			r <- succ("BLPOP", "key", 1)
+			r <- succ("BLPOP", "key", 1) // will timeout
+		},
+		func(r chan<- command) {
+			r <- succ("LPUSH", "key", "aap", "noot", "mies")
+			time.Sleep(10 * time.Millisecond)
+			r <- succ("LPUSH", "key", "toon")
 		},
 	)
 }
