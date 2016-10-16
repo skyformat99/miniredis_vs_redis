@@ -366,3 +366,41 @@ func TestBlpop(t *testing.T) {
 		},
 	)
 }
+
+func TestBrpoplpush(t *testing.T) {
+	testCommands(t,
+		succ("LPUSH", "l", "one"),
+		succ("BRPOPLPUSH", "l", "l2", 1),
+		succ("EXISTS", "l"),
+		succ("EXISTS", "l2"),
+		succ("LRANGE", "l", 0, -1),
+		succ("LRANGE", "l2", 0, -1),
+
+		// failure cases
+		fail("BRPOPLPUSH"),
+		fail("BRPOPLPUSH", "l"),
+		fail("BRPOPLPUSH", "l", "x"),
+		fail("BRPOPLPUSH", 1),
+		fail("BRPOPLPUSH", "from", "to", -1),
+		fail("BRPOPLPUSH", "from", "to", -1, "xxx"),
+	)
+
+	testMultiCommands(t,
+		func(r chan<- command) {
+			r <- succ("BRPOPLPUSH", "from", "to", 1)
+			r <- succ("BRPOPLPUSH", "from", "to", 1)
+			r <- succ("BRPOPLPUSH", "from", "to", 1)
+			r <- succ("BRPOPLPUSH", "from", "to", 1)
+			r <- succ("BRPOPLPUSH", "from", "to", 1) // will timeout
+		},
+		func(r chan<- command) {
+			r <- succ("LPUSH", "from", "aap", "noot", "mies")
+			r <- succ("LRANGE", "from", 0, -1)
+			r <- succ("LRANGE", "to", 0, -1)
+			time.Sleep(10 * time.Millisecond)
+			r <- succ("LPUSH", "from", "toon")
+			r <- succ("LRANGE", "from", 0, -1)
+			r <- succ("LRANGE", "to", 0, -1)
+		},
+	)
+}
