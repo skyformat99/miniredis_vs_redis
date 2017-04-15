@@ -2,6 +2,9 @@ package main
 
 import (
 	"testing"
+	"time"
+
+	"github.com/alicebob/miniredis"
 )
 
 func TestEcho(t *testing.T) {
@@ -162,5 +165,35 @@ func TestScan(t *testing.T) {
 		fail("SCAN", 0, "MATCH"),
 		fail("SCAN", 0, "garbage"),
 		fail("SCAN", 0, "COUNT", 12, "MATCH", "foo", "garbage"),
+	)
+}
+
+func TestFastForward(t *testing.T) {
+	testMultiCommands(t,
+		func(r chan<- command, m *miniredis.Miniredis) {
+			r <- succ("SET", "key1", "value")
+			r <- succ("SET", "key", "value", "PX", 100)
+			r <- succSorted("KEYS", "*")
+			time.Sleep(200 * time.Millisecond)
+			m.FastForward(200 * time.Millisecond)
+			r <- succSorted("KEYS", "*")
+		},
+	)
+
+	testCommands(t,
+		fail("SET", "key1", "value", "PX", -100),
+		fail("SET", "key2", "value", "EX", -100),
+		fail("SET", "key3", "value", "EX", 0),
+		succSorted("KEYS", "*"),
+
+		succ("SET", "key4", "value"),
+		succSorted("KEYS", "*"),
+		succ("EXPIRE", "key4", -100),
+		succSorted("KEYS", "*"),
+
+		succ("SET", "key4", "value"),
+		succSorted("KEYS", "*"),
+		succ("EXPIRE", "key4", 0),
+		succSorted("KEYS", "*"),
 	)
 }

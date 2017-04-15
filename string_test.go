@@ -20,6 +20,8 @@ func TestString(t *testing.T) {
 		fail("SET", "foo", "bar", "baz"),
 		fail("GET"),
 		fail("GET", "too", "many"),
+		fail("SET", "foo", "bar", "EX", 0),
+		fail("SET", "foo", "bar", "EX", -100),
 		// Wrong type
 		succ("HSET", "hash", "key", "value"),
 		fail("GET", "hash"),
@@ -92,6 +94,13 @@ func TestExpire(t *testing.T) {
 		// succ("PTTL", "foo"),
 		succ("PTTL", "nosuch"),
 
+		succ("SET", "foo", "bar"),
+		succ("EXPIRE", "foo", 0),
+		succ("EXISTS", "foo"),
+		succ("SET", "foo", "bar"),
+		succ("EXPIRE", "foo", -12),
+		succ("EXISTS", "foo"),
+
 		fail("EXPIRE"),
 		fail("EXPIRE", "foo"),
 		fail("EXPIRE", "foo", "noint"),
@@ -146,6 +155,8 @@ func TestSetx(t *testing.T) {
 		fail("SETEX", "foo", "noint", "bar"),
 		fail("SETEX", "foo", 12),
 		fail("SETEX", "foo", 12, "bar", "toomany"),
+		fail("SETEX", "foo", 0),
+		fail("SETEX", "foo", -12),
 
 		succ("PSETEX", "foo", 12, "bar"),
 		succ("GET", "foo"),
@@ -154,6 +165,8 @@ func TestSetx(t *testing.T) {
 		fail("PSETEX", "foo", "noint", "bar"),
 		fail("PSETEX", "foo", 12),
 		fail("PSETEX", "foo", 12, "bar", "toomany"),
+		fail("PSETEX", "foo", 0),
+		fail("PSETEX", "foo", -12),
 	)
 }
 

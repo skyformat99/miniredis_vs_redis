@@ -76,7 +76,7 @@ func testCommands(t *testing.T, commands ...command) {
 }
 
 // like testCommands, but multiple connections
-func testMultiCommands(t *testing.T, cs ...func(chan<- command)) {
+func testMultiCommands(t *testing.T, cs ...func(chan<- command, *miniredis.Miniredis)) {
 	sMini, err := miniredis.Run()
 	ok(t, err)
 	defer sMini.Close()
@@ -94,13 +94,13 @@ func testMultiCommands(t *testing.T, cs ...func(chan<- command)) {
 		ok(t, err)
 
 		wg.Add(1)
-		go func(c func(chan<- command)) {
+		go func(c func(chan<- command, *miniredis.Miniredis)) {
 			defer wg.Done()
 			gen := make(chan command)
 			wg.Add(1)
 			go func() {
 				defer wg.Done()
-				c(gen)
+				c(gen, sMini)
 				close(gen)
 			}()
 			for cm := range gen {
