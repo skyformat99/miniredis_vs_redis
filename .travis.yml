@@ -12,3 +12,8 @@ sudo: false
 
 services:
   - redis-server
+
+addons:
+  apt:
+    packages:
+    - redis-server
