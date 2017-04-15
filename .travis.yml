@@ -9,3 +9,6 @@ branches:
         master
 
 sudo: false
+
+services:
+  - redis-server
