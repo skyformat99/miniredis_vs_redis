@@ -5,6 +5,8 @@ package main
 import (
 	"testing"
 	"time"
+
+	"github.com/alicebob/miniredis"
 )
 
 func TestLPush(t *testing.T) {
@@ -308,14 +310,14 @@ func TestBrpop(t *testing.T) {
 
 func TestBrpopMulti(t *testing.T) {
 	testMultiCommands(t,
-		func(r chan<- command) {
+		func(r chan<- command, _ *miniredis.Miniredis) {
 			r <- succ("BRPOP", "key", 1)
 			r <- succ("BRPOP", "key", 1)
 			r <- succ("BRPOP", "key", 1)
 			r <- succ("BRPOP", "key", 1)
 			r <- succ("BRPOP", "key", 1) // will timeout
 		},
-		func(r chan<- command) {
+		func(r chan<- command, _ *miniredis.Miniredis) {
 			r <- succ("LPUSH", "key", "aap", "noot", "mies")
 			time.Sleep(50 * time.Millisecond)
 			r <- succ("LPUSH", "key", "toon")
@@ -325,10 +327,10 @@ func TestBrpopMulti(t *testing.T) {
 
 func TestBrpopTrans(t *testing.T) {
 	testMultiCommands(t,
-		func(r chan<- command) {
+		func(r chan<- command, _ *miniredis.Miniredis) {
 			r <- succ("BRPOP", "key", 1)
 		},
-		func(r chan<- command) {
+		func(r chan<- command, _ *miniredis.Miniredis) {
 			r <- succ("MULTI")
 			r <- succ("LPUSH", "key", "toon")
 			r <- succ("EXEC")
@@ -352,14 +354,14 @@ func TestBlpop(t *testing.T) {
 	)
 
 	testMultiCommands(t,
-		func(r chan<- command) {
+		func(r chan<- command, _ *miniredis.Miniredis) {
 			r <- succ("BLPOP", "key", 1)
 			r <- succ("BLPOP", "key", 1)
 			r <- succ("BLPOP", "key", 1)
 			r <- succ("BLPOP", "key", 1)
 			r <- succ("BLPOP", "key", 1) // will timeout
 		},
-		func(r chan<- command) {
+		func(r chan<- command, _ *miniredis.Miniredis) {
 			r <- succ("LPUSH", "key", "aap", "noot", "mies")
 			time.Sleep(10 * time.Millisecond)
 			r <- succ("LPUSH", "key", "toon")
@@ -384,16 +386,15 @@ func TestBrpoplpush(t *testing.T) {
 		fail("BRPOPLPUSH", "from", "to", -1),
 		fail("BRPOPLPUSH", "from", "to", -1, "xxx"),
 	)
-
 	testMultiCommands(t,
-		func(r chan<- command) {
+		func(r chan<- command, _ *miniredis.Miniredis) {
 			r <- succ("BRPOPLPUSH", "from", "to", 1)
 			r <- succ("BRPOPLPUSH", "from", "to", 1)
 			r <- succ("BRPOPLPUSH", "from", "to", 1)
 			r <- succ("BRPOPLPUSH", "from", "to", 1)
 			r <- succ("BRPOPLPUSH", "from", "to", 1) // will timeout
 		},
-		func(r chan<- command) {
+		func(r chan<- command, _ *miniredis.Miniredis) {
 			r <- succ("LPUSH", "from", "aap", "noot", "mies")
 			r <- succ("LRANGE", "from", 0, -1)
 			r <- succ("LRANGE", "to", 0, -1)
