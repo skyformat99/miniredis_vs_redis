@@ -396,8 +396,6 @@ func TestBrpoplpush(t *testing.T) {
 		},
 		func(r chan<- command, _ *miniredis.Miniredis) {
 			r <- succ("LPUSH", "from", "aap", "noot", "mies")
-			r <- succ("LRANGE", "from", 0, -1)
-			r <- succ("LRANGE", "to", 0, -1)
 			time.Sleep(10 * time.Millisecond)
 			r <- succ("LPUSH", "from", "toon")
 			r <- succ("LRANGE", "from", 0, -1)
