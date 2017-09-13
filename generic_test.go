@@ -1,6 +1,7 @@
 package main
 
 import (
+	"strings"
 	"testing"
 	"time"
 
@@ -195,5 +196,11 @@ func TestFastForward(t *testing.T) {
 		succSorted("KEYS", "*"),
 		succ("EXPIRE", "key4", 0),
 		succSorted("KEYS", "*"),
+	)
+}
+
+func TestProto(t *testing.T) {
+	testCommands(t,
+		succ("ECHO", strings.Repeat("X", 1<<24)),
 	)
 }
