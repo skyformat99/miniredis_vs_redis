@@ -542,6 +542,20 @@ func TestZunionstore(t *testing.T) {
 		succ("SET", "str", "1"),
 		fail("ZUNIONSTORE", "h", 1, "str"),
 	)
+	// overwrite
+	testCommands(t,
+		succ("ZADD", "h1", 1.0, "key1"),
+		succ("ZADD", "h1", 2.0, "key2"),
+		succ("ZADD", "h2", 1.0, "key1"),
+		succ("ZADD", "h2", 4.0, "key2"),
+		succ("SET", "str", "1"),
+		succ("ZUNIONSTORE", "str", 2, "h1", "h2"),
+		succ("TYPE", "str"),
+		succ("ZUNIONSTORE", "h2", 2, "h1", "h2"),
+		succ("ZRANGE", "h2", 0, -1, "WITHSCORES"),
+		succ("TYPE", "h1"),
+		succ("TYPE", "h2"),
+	)
 }
 
 func TestZinterstore(t *testing.T) {
