@@ -3,9 +3,7 @@ package main
 import (
 	"bytes"
 	"fmt"
-	"path/filepath"
 	"reflect"
-	"runtime"
 	"sort"
 	"sync"
 	"testing"
@@ -58,14 +56,14 @@ func fail(cmd string, args ...interface{}) command {
 
 // ok fails the test if an err is not nil.
 func ok(tb testing.TB, err error) {
+	tb.Helper()
 	if err != nil {
-		_, file, line, _ := runtime.Caller(1)
-		fmt.Printf("%s:%d: unexpected error: %s\n", filepath.Base(file), line, err.Error())
-		tb.FailNow()
+		tb.Fatalf("unexpected error: %s", err.Error())
 	}
 }
 
 func testCommands(t *testing.T, commands ...command) {
+	t.Helper()
 	sMini, err := miniredis.Run()
 	ok(t, err)
 	defer sMini.Close()
@@ -77,6 +75,7 @@ func testCommands(t *testing.T, commands ...command) {
 
 // like testCommands, but multiple connections
 func testMultiCommands(t *testing.T, cs ...func(chan<- command, *miniredis.Miniredis)) {
+	t.Helper()
 	sMini, err := miniredis.Run()
 	ok(t, err)
 	defer sMini.Close()
@@ -123,6 +122,7 @@ func testAuthCommands(t *testing.T, passwd string, commands ...command) {
 }
 
 func runCommands(t *testing.T, realAddr, miniAddr string, commands []command) {
+	t.Helper()
 	cMini, err := redis.Dial("tcp", miniAddr)
 	ok(t, err)
 
@@ -135,30 +135,31 @@ func runCommands(t *testing.T, realAddr, miniAddr string, commands []command) {
 }
 
 func runCommand(t *testing.T, cMini, cReal redis.Conn, p command) {
+	t.Helper()
 	vReal, errReal := cReal.Do(p.cmd, p.args...)
 	vMini, errMini := cMini.Do(p.cmd, p.args...)
 	if p.error {
 		if errReal == nil {
-			lError(t, "got no error from realredis. case: %#v\n", p)
+			t.Errorf("got no error from realredis. case: %#v", p)
 			return
 		}
 		if errMini == nil {
-			lError(t, "got no error from miniredis. case: %#v real error: %s\n", p, errReal)
+			t.Errorf("got no error from miniredis. case: %#v real error: %s", p, errReal)
 			return
 		}
 	} else {
 		if errReal != nil {
-			lError(t, "got an error from realredis: %v. case: %#v\n", errReal, p)
+			t.Errorf("got an error from realredis: %v. case: %#v", errReal, p)
 			return
 		}
 		if errMini != nil {
-			lError(t, "got an error from miniredis: %v. case: %#v\n", errMini, p)
+			t.Errorf("got an error from miniredis: %v. case: %#v", errMini, p)
 			return
 		}
 	}
 	if !reflect.DeepEqual(errReal, errMini) {
-		lError(t, "error error. expected: %#v got: %#v case: %#v\n",
-			vReal, vMini, p)
+		t.Errorf("error error. expected: %#v got: %#v case: %#v", vReal, vMini, p)
+		return
 	}
 	// Sort the strings.
 	if p.sort {
@@ -167,22 +168,15 @@ func runCommand(t *testing.T, cMini, cReal redis.Conn, p command) {
 	}
 	if p.loosely {
 		if !looselyEqual(vReal, vMini) {
-			lError(t, "value error. expected: %#v got: %#v case: %#v\n",
-				vReal, vMini, p)
+			t.Errorf("value error. expected: %#v got: %#v case: %#v", vReal, vMini, p)
+			return
 		}
 	} else {
 		if !reflect.DeepEqual(vReal, vMini) {
-			lError(t, "value error. expected: %#v got: %#v case: %#v\n",
-				vReal, vMini, p)
+			t.Errorf("value error. expected: %#v got: %#v case: %#v", vReal, vMini, p)
+			return
 		}
 	}
-}
-
-func lError(t *testing.T, format string, args ...interface{}) {
-	_, file, line, _ := runtime.Caller(4)
-	prefix := fmt.Sprintf("%s:%d: ", filepath.Base(file), line)
-	fmt.Printf(prefix+format, args...)
-	t.Fail()
 }
 
 // BytesList implements the sort interface for things we know is a list of
