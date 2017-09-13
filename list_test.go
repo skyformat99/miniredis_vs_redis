@@ -53,11 +53,11 @@ func TestLPushx(t *testing.T) {
 		succ("LPUSHX", "l", "mies"),
 		succ("EXISTS", "l"),
 		succ("LRANGE", "l", 0, -1),
+		succ("LPUSHX", "l", "even", "more", "arguments"),
 
 		// failure cases
 		fail("LPUSHX"),
 		fail("LPUSHX", "l"),
-		fail("LPUSHX", "too", "many", "args"),
 		succ("SET", "str", "I am a string"),
 		fail("LPUSHX", "str", "mies"),
 	)
@@ -275,12 +275,12 @@ func TestRpushx(t *testing.T) {
 		succ("RPUSHX", "l", "vuur"),
 		succ("EXISTS", "l"),
 		succ("LRANGE", "l", 0, -1),
+		succ("RPUSHX", "l", "more", "arguments"),
 
 		// failure cases
 		succ("RPUSH", "chk", "noot", "mies"),
 		fail("RPUSHX"),
 		fail("RPUSHX", "chk"),
-		fail("RPUSHX", "chk", "too", "many"),
 		succ("LRANGE", "chk", 0, -1),
 		succ("SET", "str", "I am a string"),
 		fail("RPUSHX", "str", "value"),
