@@ -22,9 +22,15 @@ func TestServer(t *testing.T) {
 		succ("FLUSHALL"),
 		succ("DBSIZE"),
 
+		succ("FLUSHDB", "aSyNc"),
+		succ("FLUSHALL", "AsYnC"),
+
 		// Failure cases
 		fail("DBSIZE", "foo"),
 		fail("FLUSHDB", "foo"),
 		fail("FLUSHALL", "foo"),
+		fail("FLUSHDB", "ASYNC", "foo"),
+		fail("FLUSHDB", "ASYNC", "ASYNC"),
+		fail("FLUSHALL", "ASYNC", "foo"),
 	)
 }
