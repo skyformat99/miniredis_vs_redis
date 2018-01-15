@@ -25,3 +25,27 @@ func TestEval(t *testing.T) {
 		fail("EVAL", 42),
 	)
 }
+
+func TestScript(t *testing.T) {
+	testCommands(t,
+		succ("SCRIPT", "LOAD", "return 42"),
+		succ("SCRIPT", "LOAD", "return 42"),
+		succ("SCRIPT", "LOAD", "return 43"),
+
+		succ("SCRIPT", "EXISTS", "1fa00e76656cc152ad327c13fe365858fd7be306"),
+		succ("SCRIPT", "EXISTS", "0", "1fa00e76656cc152ad327c13fe365858fd7be306"),
+		succ("SCRIPT", "EXISTS", 0),
+		succ("SCRIPT", "EXISTS"),
+
+		succ("SCRIPT", "FLUSH"),
+		succ("SCRIPT", "EXISTS", "1fa00e76656cc152ad327c13fe365858fd7be306"),
+
+		fail("SCRIPT"),
+		fail("SCRIPT", "LOAD", "return 42", "return 42"),
+		failLoosely("SCRIPT", "LOAD", "]"),
+		fail("SCRIPT", "LOAD", "]", "foo"),
+		fail("SCRIPT", "LOAD"),
+		fail("SCRIPT", "FLUSH", "foo"),
+		fail("SCRIPT", "FOO"),
+	)
+}

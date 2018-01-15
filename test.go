@@ -54,6 +54,16 @@ func fail(cmd string, args ...interface{}) command {
 	}
 }
 
+// only compare the error state, not the actual error message
+func failLoosely(cmd string, args ...interface{}) command {
+	return command{
+		cmd:     cmd,
+		args:    args,
+		error:   true,
+		loosely: true,
+	}
+}
+
 // ok fails the test if an err is not nil.
 func ok(tb testing.TB, err error) {
 	tb.Helper()
@@ -145,6 +155,9 @@ func runCommand(t *testing.T, cMini, cReal redis.Conn, p command) {
 		}
 		if errMini == nil {
 			t.Errorf("got no error from miniredis. case: %#v real error: %s", p, errReal)
+			return
+		}
+		if p.loosely {
 			return
 		}
 	} else {
