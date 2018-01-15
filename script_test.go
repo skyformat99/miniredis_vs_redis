@@ -99,10 +99,22 @@ func TestLua(t *testing.T) {
 		succ("EVAL", "return {1,{err = 'oops'}}", 0),
 		fail("EVAL", "return redis.error_reply('oops')", 0),
 		succ("EVAL", "return {1,redis.error_reply('oops')}", 0),
+		fail("EVAL", "return {err = 'oops', noerr = true}", 0), // doc error?
+		fail("EVAL", "return {1, 2, err = 'oops'}", 0),         // doc error?
+
 		succ("EVAL", "return {ok = 'great'}", 0),
 		succ("EVAL", "return {1,{ok = 'great'}}", 0),
 		succ("EVAL", "return redis.status_reply('great')", 0),
 		succ("EVAL", "return {1,redis.status_reply('great')}", 0),
+		succ("EVAL", "return {ok = 'great', notok = 'yes'}", 0),       // doc error?
+		succ("EVAL", "return {1, 2, ok = 'great', notok = 'yes'}", 0), // doc error?
+
+		failLoosely("EVAL", "return redis.error_reply(1)", 0),
+		failLoosely("EVAL", "return redis.error_reply()", 0),
+		failLoosely("EVAL", "return redis.error_reply(redis.error_reply('foo'))", 0),
+		failLoosely("EVAL", "return redis.status_reply(1)", 0),
+		failLoosely("EVAL", "return redis.status_reply()", 0),
+		failLoosely("EVAL", "return redis.status_reply(redis.status_reply('foo'))", 0),
 	)
 	// state inside lua
 	testCommands(t,
