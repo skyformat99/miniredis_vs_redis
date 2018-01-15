@@ -74,3 +74,41 @@ func TestEvalsha(t *testing.T) {
 		fail("EVALSHA", "nosuch", 0),
 	)
 }
+
+func TestLua(t *testing.T) {
+	// basic datatype things
+	testCommands(t,
+		succ("EVAL", "", 0),
+		succ("EVAL", "return 42", 0),
+		succ("EVAL", "return 42, 43", 0),
+		succ("EVAL", "return true", 0),
+		succ("EVAL", "return 'foo'", 0),
+		succ("EVAL", "return 3.1415", 0),
+		succ("EVAL", "return 3.9999", 0),
+		succ("EVAL", "return {1,'foo'}", 0),
+		succ("EVAL", "return {1,'foo',nil,'foo'}", 0),
+		succ("EVAL", "return 3.9999+3", 0),
+		succ("EVAL", "return 3.99+0.0001", 0),
+		succ("EVAL", "return 3.9999+0.201", 0),
+		succ("EVAL", "return {{1}}", 0),
+		succ("EVAL", "return {1,{1,{1,'bar'}}}", 0),
+	)
+	// special returns
+	testCommands(t,
+		fail("EVAL", "return {err = 'oops'}", 0),
+		succ("EVAL", "return {1,{err = 'oops'}}", 0),
+		fail("EVAL", "return redis.error_reply('oops')", 0),
+		succ("EVAL", "return {1,redis.error_reply('oops')}", 0),
+		succ("EVAL", "return {ok = 'great'}", 0),
+		succ("EVAL", "return {1,{ok = 'great'}}", 0),
+		succ("EVAL", "return redis.status_reply('great')", 0),
+		succ("EVAL", "return {1,redis.status_reply('great')}", 0),
+	)
+	// state inside lua
+	testCommands(t,
+		succ("EVAL", "redis.call('SELECT', 3); redis.call('SET', 'foo', 'bar')", 0),
+		succ("GET", "foo"),
+		succ("SELECT", 3),
+		succ("GET", "foo"),
+	)
+}
