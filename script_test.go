@@ -49,3 +49,28 @@ func TestScript(t *testing.T) {
 		fail("SCRIPT", "FOO"),
 	)
 }
+
+func TestEvalsha(t *testing.T) {
+	sha1 := "1fa00e76656cc152ad327c13fe365858fd7be306" // "return 42"
+	sha2 := "bfbf458525d6a0b19200bfd6db3af481156b367b" // keys[1], argv[1]
+
+	testCommands(t,
+		succ("SCRIPT", "LOAD", "return 42"),
+		succ("SCRIPT", "LOAD", "return {KEYS[1],ARGV[1]}"),
+		succ("EVALSHA", sha1, "0"),
+		succ("EVALSHA", sha2, "0"),
+		succ("EVALSHA", sha2, "0", "foo"),
+		succ("EVALSHA", sha2, "1", "foo"),
+		succ("EVALSHA", sha2, "1", "foo", "bar"),
+		succ("EVALSHA", sha2, "1", "foo", "bar", "baz"),
+
+		succ("SCRIPT", "FLUSH"),
+		fail("EVALSHA", sha1, "0"),
+
+		succ("SCRIPT", "LOAD", "return 42"),
+		fail("EVALSHA", sha1),
+		fail("EVALSHA"),
+		fail("EVALSHA", "nosuch"),
+		fail("EVALSHA", "nosuch", 0),
+	)
+}
