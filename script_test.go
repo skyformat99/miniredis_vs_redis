@@ -93,6 +93,7 @@ func TestLua(t *testing.T) {
 		succ("EVAL", "return {{1}}", 0),
 		succ("EVAL", "return {1,{1,{1,'bar'}}}", 0),
 	)
+
 	// special returns
 	testCommands(t,
 		fail("EVAL", "return {err = 'oops'}", 0),
@@ -116,11 +117,89 @@ func TestLua(t *testing.T) {
 		failLoosely("EVAL", "return redis.status_reply()", 0),
 		failLoosely("EVAL", "return redis.status_reply(redis.status_reply('foo'))", 0),
 	)
+
 	// state inside lua
 	testCommands(t,
 		succ("EVAL", "redis.call('SELECT', 3); redis.call('SET', 'foo', 'bar')", 0),
 		succ("GET", "foo"),
 		succ("SELECT", 3),
 		succ("GET", "foo"),
+	)
+}
+
+func TestLuaCall(t *testing.T) {
+	testCommands(t,
+		succ("SET", "foo", 1),
+		succ("EVAL", `local foo = redis.call("GET", "foo"); redis.call("SET", "foo", foo+1)`, 0),
+		succ("GET", "foo"),
+	)
+
+	// datatype errors
+	testCommands(t,
+		failWith(
+			"Please specify at least one argument for redis.call()",
+			"EVAL", `redis.call()`, 0,
+		),
+		failWith(
+			"Lua redis() command arguments must be strings or integers",
+			"EVAL", `redis.call({})`, 0,
+		),
+		failWith(
+			"Unknown Redis command called from Lua script",
+			"EVAL", `redis.call(1)`, 0,
+		),
+		failWith(
+			"Lua redis() command arguments must be strings or integers",
+			"EVAL", `redis.call("ECHO", true)`, 0,
+		),
+		failWith(
+			"Lua redis() command arguments must be strings or integers",
+			"EVAL", `redis.call("ECHO", false)`, 0,
+		),
+		failWith(
+			"Lua redis() command arguments must be strings or integers",
+			"EVAL", `redis.call("ECHO", nil)`, 0,
+		),
+		failWith(
+			"Lua redis() command arguments must be strings or integers",
+			"EVAL", `redis.call("HELLO", {})`, 0,
+		),
+		failLoosely("EVAL", `redis.call("HELLO", 1)`, 0),
+		failLoosely("EVAL", `redis.call("HELLO", 3.14)`, 0),
+		failWith(
+			"Lua redis() command arguments must be strings or integers",
+			"EVAL", `redis.call("GET", {})`, 0,
+		),
+	)
+
+	// call() errors
+	testCommands(t,
+		succ("SET", "foo", 1),
+
+		failLoosely("EVAL", `redis.call("HGET", "foo")`, 0),
+		succ("GET", "foo"),
+		failLoosely("EVAL", `local foo = redis.call("HGET", "foo"); redis.call("SET", "res", foo)`, 0),
+		succ("GET", "foo"),
+		succ("GET", "res"),
+		failLoosely("EVAL", `local foo = redis.call("HGET", "foo", "bar"); redis.call("SET", "res", foo)`, 0),
+		succ("GET", "foo"),
+		succ("GET", "res"),
+	)
+
+	// pcall() errors
+	testCommands(t,
+		succ("SET", "foo", 1),
+		failWith(
+			"Lua redis() command arguments must be strings or integers",
+			"EVAL", `local foo = redis.pcall("HGET", "foo"); redis.call("SET", "res", foo)`, 0,
+		),
+		succ("GET", "foo"),
+		succ("GET", "res"),
+		failWith(
+			"Lua redis() command arguments must be strings or integers",
+			"EVAL", `local foo = redis.pcall("HGET", "foo", "bar"); redis.call("SET", "res", foo)`, 0,
+		),
+		succ("GET", "foo"),
+		succ("GET", "res"),
 	)
 }

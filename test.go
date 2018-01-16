@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"reflect"
 	"sort"
+	"strings"
 	"sync"
 	"testing"
 
@@ -13,11 +14,12 @@ import (
 )
 
 type command struct {
-	cmd     string // 'GET', 'SET', &c.
-	args    []interface{}
-	error   bool // Whether the command should return an error or not.
-	sort    bool // Sort real redis's result. Used for 'keys'.
-	loosely bool // Don't compare values, only structure. (for random things)
+	cmd      string // 'GET', 'SET', &c.
+	args     []interface{}
+	error    bool   // Whether the command should return an error or not.
+	sort     bool   // Sort real redis's result. Used for 'keys'.
+	loosely  bool   // Don't compare values, only structure. (for random things)
+	errorSub string // Both errors need this substring
 }
 
 func succ(cmd string, args ...interface{}) command {
@@ -51,6 +53,16 @@ func fail(cmd string, args ...interface{}) command {
 		cmd:   cmd,
 		args:  args,
 		error: true,
+	}
+}
+
+// expect an error, with `sub` in both errors
+func failWith(sub string, cmd string, args ...interface{}) command {
+	return command{
+		cmd:      cmd,
+		args:     args,
+		error:    true,
+		errorSub: sub,
 	}
 }
 
@@ -170,6 +182,16 @@ func runCommand(t *testing.T, cMini, cReal redis.Conn, p command) {
 			return
 		}
 	}
+	if p.errorSub != "" {
+		if have, want := errReal.Error(), p.errorSub; !strings.Contains(have, want) {
+			t.Errorf("realredis error error. expected: %q in %q case: %#v", want, have, p)
+		}
+		if have, want := errMini.Error(), p.errorSub; !strings.Contains(have, want) {
+			t.Errorf("miniredis error error. expected: %q in %q case: %#v", want, have, p)
+		}
+		return
+	}
+
 	if !reflect.DeepEqual(errReal, errMini) {
 		t.Errorf("error error. expected: %#v got: %#v case: %#v", vReal, vMini, p)
 		return
