@@ -125,6 +125,19 @@ func TestLua(t *testing.T) {
 		succ("SELECT", 3),
 		succ("GET", "foo"),
 	)
+
+	// lua env
+	testCommands(t,
+		// succ("EVAL", "print(1)", 0),
+		succ("EVAL", `return string.format('%q', "pretty string")`, 0),
+		failLoosely("EVAL", "os.clock()", 0),
+		failLoosely("EVAL", "os.exit(42)", 0),
+		succ("EVAL", "return table.concat({1,2,3})", 0),
+		succ("EVAL", "return math.abs(-42)", 0),
+		failLoosely("EVAL", `return utf8.len("hello world")`, 0),
+		failLoosely("EVAL", `require("utf8")`, 0),
+		succ("EVAL", `return coroutine.running()`, 0),
+	)
 }
 
 func TestLuaCall(t *testing.T) {
