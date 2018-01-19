@@ -280,6 +280,19 @@ func TestIncrAndFriends(t *testing.T) {
 		fail("DECR", "int", "err"),
 		fail("DECRBY", "int"),
 		fail("INCRBYFLOAT", "int"),
+
+		// Rounding
+		succ("INCRBYFLOAT", "zero", 12.3),
+		succ("INCRBYFLOAT", "zero", -13.1),
+
+		// E
+		succ("INCRBYFLOAT", "one", "12e12"),
+		// succ("INCRBYFLOAT", "one", "12e34"), // FIXME
+		fail("INCRBYFLOAT", "one", "12e34.1"),
+		// succ("INCRBYFLOAT", "one", "0x12e12"), // FIXME
+		// succ("INCRBYFLOAT", "one", "012e12"), // FIXME
+		succ("INCRBYFLOAT", "two", "012"),
+		fail("INCRBYFLOAT", "one", "0b12e12"),
 	)
 }
 
